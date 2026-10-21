@@ -1,5 +1,9 @@
 # 설계와 리팩토링 결정
 
+## 실행 CMD와 진단 CMD 분리
+
+Start_Net10과 Start_Stage7~10은 파일 해시가 같은 서버/클라이언트 선택 래퍼라 삭제했다. 현재 역할별 시작점은 Start_Server와 Start_Client로 명확히 유지한다. 등록 UI와 보관 정책 검사 CMD는 서로 다른 기능이 있어 scripts/checks로 이동하고 프로젝트 루트를 자신의 위치에서 계산하도록 보정했다. 과거 문서의 명령명은 역사적 근거로 보존하고 guides/COMMANDS.md에 현재 대체 방법을 기록한다.
+
 ## 문서 위치와 원문 보존
 
 단계별 검증은 docs/validation, 사용 안내는 docs/guides, 장애 수정 원문은 docs/fixes, 버전 이력은 docs/history로 나눴다. 프로젝트 루트에는 README와 CHANGELOG만 남겼다. 모델 출처·라이선스와 각 실행 모듈의 README는 관련 파일 옆에 유지한다. 기존 Word 보고서는 개발 과정의 시점별 보고서이므로 다시 생성하지 않았으며, 현재 파일 위치는 docs/README.md를 기준으로 찾는다. 이동 시 원문과 검증 수준을 보존하고 Markdown 상대 링크를 보정했다.

@@ -14,6 +14,7 @@
 
 ## 사용과 코드 안내
 
+- [현재 실행·검사 스크립트](guides/COMMANDS.md) — 과거 CMD 이름의 대체 실행 방법 포함
 - [AUTO_IDENTIFICATION_12_3_KO.md — 12.3 전체 직원 자동 식별(1:N)](guides/AUTO_IDENTIFICATION_12_3_KO.md)
 - [CODE_GUIDE_KO.md — AccessControl_UI 코드 읽기 안내](guides/CODE_GUIDE_KO.md)
 - [DEPLOY_TWO_PC.md — 12.2 두 PC 배치·실행 안내](guides/DEPLOY_TWO_PC.md)

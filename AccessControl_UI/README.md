@@ -11,6 +11,7 @@
 
 ## 문서
 
+- [실행·검사 스크립트 안내](docs/guides/COMMANDS.md)
 - [전체 문서 목차](docs/README.md)
 - [시스템 구성과 핵심 기능](docs/project-summary.md)
 - [전체 개발 과정](docs/development-history.md)

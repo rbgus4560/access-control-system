@@ -66,7 +66,7 @@
 - 해결 기록: 이전 부모에서 분리한 뒤 새 패널에 붙이도록 수정. 시작 예외를 enrollment-startup.log에 남기고 UI 생성·설정 창 재열기 검사 제공.
 - 검증: WPF 3개 교차 빌드 통과 기록. Check_Enrollment_UI.cmd의 실제 최신 Windows 실행 결과는 미확인.
 - 배운 점/후속: UI 컨트롤의 부모·창 수명을 함께 관리. 등록 창 생성과 설정 창 반복 재열기로 확인.
-- 근거: [README](../README.md), [등록 UI](../FaceEnrollment/MainWindow.xaml.cs), [Windows 검사 명령](../Check_Enrollment_UI.cmd).
+- 근거: [README](../README.md), [등록 UI](../FaceEnrollment/MainWindow.xaml.cs), [Windows 검사 명령](../scripts/checks/Check_Enrollment_UI.cmd).
 
 ## TS-06 · 안내 겹침·스크롤 여백·클립 버튼 배치
 - 시점: 12.2.2~12.2.3.

@@ -2,6 +2,7 @@
 
 ## 2026 10 21
 
+- 동일한 과거 실행 래퍼 Start_Net10과 Start_Stage7~10 CMD 5개 삭제. 등록 UI·보관 검사 CMD는 scripts/checks로 이동하고 프로젝트 참조 경로 보정. 역할별 서버·클라이언트 실행 CMD와 Python 환경 설치 BAT 유지.
 - 문서 구조 정리: 흩어진 문서 33개를 docs/guides·validation·fixes·history 및 독립 도구 docs로 이동. 기존 README는 history에 보존하고 현재 실행 안내로 축약. 문서 목차와 상대 링크 갱신. 실행 코드 변경 없음.
 - 기존 작업 분석 문서와 트러블슈팅 통합 기록 작성.
 - 통합본·독립 도구의 참조 비교에서 입력 특징의 반복 정규화 제거.
