@@ -1,0 +1,48 @@
+12.0 validation output (2026-10-19). Linux .NET SDK 10.0.402; Windows hardware validation pending.
+
+Five-direction / model / dimensions / missing direction / invalid values / zero vectors: PASS
+Request correlation / Korean response / feature JSON ownership / bounded and truncated frames: PASS
+Recording contract / approved local paths / time-count consistency / sync request: PASS
+Timeline start/end boundaries / true gaps / rotation continuity / next segment / local millisecond time: PASS
+Event playback request / identity / camera / timestamp freshness / bounded Korean roundtrip: PASS
+Clip frame plan / cross-segment range / missing coverage / true gaps / duration limit / SHA256 metadata: PASS
+Legacy 5 / complete 9 / partial and unknown rejection / bounded nine save request: PASS
+Guided representative samples / DB pose and sample mapping / partial rejection / bounded save roundtrip: PASS
+Observation conditions / stale command / multiple faces / no face / comparison off / aging / mismatch: PASS
+Protocol validation / Korean JSON round trip / bounded packet: PASS
+Real loopback TCP / ACK / heartbeat / server restart / reconnect / malformed peer / shutdown: PASS
+Partial-frame timeout and recovery: PASS
+Authorization 32 flag combinations / attempts / re-arm / transit age / event idempotency / permission restore / forged or unrecorded grant: PASS
+Server policy callback / TCP decision response / acknowledgement correlation: PASS
+Missing timestamp rejection / recorded grant ACK / stored distance and identity response: PASS
+Video bounds / metadata / freshness / port mapping / source expiry: PASS
+Video real TCP / camera stop clears / server restart reconnect / disconnect clears: PASS
+Malformed video recovery / partial frame cancellation: PASS
+Video offline / independent control ACKs: PASS
+Legacy five / expanded nine directions / diagonal transport / partial reference rejection: PASS
+Offline receive / JSON ownership / reconnect / invalid version / replacement / clear: PASS
+OS denies Unix sockets here; Windows Named Pipe transport verification pending.
+72-hour end-time boundary / recent / active recording: PASS
+Expired media removal / durable tombstone / recent and RECORDING/FAILED preserved / clips excluded / untracked preserved / idempotency: PASS
+Playback/whole clip-job pin / cleanup contention / release and retry: PASS
+Crash after media deletion / intent before deletion / restart resume: PASS
+Out-of-root manifest / modified file-size rejection: PASS
+Symlink/junction root rejection: PASS
+DELETED metadata transport roundtrip: PASS
+Pinned TLS monitor/video, ACK, reconnect: PASS
+Remote API correlation, guided nine-sample reference, token/pin/channel rejection, write allowlist: PASS
+Streaming hash/size validation, truncated transfer, atomic destination preservation: PASS
+Separate-process roots, outbound segment/clip transfer, receipt-only temp cleanup, server restart/reconnect, durable DB completion recovery: PASS
+
+WPF cross-build: FaceRecognition / FaceEnrollment / AccessControlServer: PASS
+FaceAI source + bundled model SHA-256 unchanged from 11.1: PASS
+PostgreSQL PGlite: original schema + device seed, 13/14/15 repeated, JSONB/UPSERT/state transitions/legacy rows: PASS
+
+12.1 UI-only update: three WPF cross-builds PASS; source XAML parse PASS.
+Network (6), FaceService (10), FaceAI (33), Database (8) files and recording/media/AI bridge unchanged against 12.0.
+Windows UI layout/reopen and real two-PC validation pending.
+
+12.2: three WPF cross-builds PASS; Python 40 tests PASS (including native OpenCV MP4 checks and guided stage/front-return regression).
+Network/FaceService/Database/media/model math unchanged; physical camera direction and Windows layout still pending.
+
+12.2.1: three WPF cross-builds PASS. Released three previous parents before moving controls. Windows UI smoke/reopen check added but not executed in Linux.

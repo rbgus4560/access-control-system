@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+    <ItemGroup>
+        <Compile Include="../Network/*.cs" Link="Network/%(Filename)%(Extension)"/>
+        <Compile Include="../FaceService/*.cs" Link="FaceService/%(Filename)%(Extension)"/>
+        <Compile Include="../Shared/AiClient.cs" Link="AiClient.cs"/>
+        <Compile Include="../Shared/AiSettings.cs" Link="AiSettings.cs"/>
+        <Compile Include="../FaceRecognition/MediaAgent.cs" Link="MediaAgent.cs"/>
+        <Compile Include="../AccessControlServer/MediaCoordinator.cs" Link="MediaCoordinator.cs"/>
+        <Compile Include="../FaceRecognition/RecordingSync.cs" Link="RecordingSync.cs"/>
+        <Compile Include="../FaceRecognition/GallerySynchronizer.cs" Link="GallerySynchronizer.cs"/>
+        <Compile Include="../FaceRecognition/ObservationSource.cs" Link="ObservationSource.cs"/>
+    </ItemGroup>
+</Project>

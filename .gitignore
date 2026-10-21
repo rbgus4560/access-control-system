@@ -1,0 +1,16 @@
+**/bin/
+**/obj/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.vs/
+.venv/
+*.user
+*.suo
+**/model_cache/
+**/recordings/
+**/clips/
+**/remote_cache/
+.env
+.env.*
+!.env.example

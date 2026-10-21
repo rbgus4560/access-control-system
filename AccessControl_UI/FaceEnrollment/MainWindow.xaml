@@ -1,0 +1,103 @@
+<!-- 얼굴 등록 화면: 큰 카메라 영역, 직원 선택·수집 진행 영역, 하단 저장 버튼을 분리합니다. -->
+<Window
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    x:Class="FaceEnrollment.MainWindow"
+    Title="Access Control · 직원 얼굴 등록 12.3 · .NET 10"
+    Width="1400"
+    Height="900"
+    MinWidth="980"
+    MinHeight="640"
+    Closing="WindowClosing"
+    Background="{StaticResource StudioBackground}"
+    Foreground="{StaticResource StudioInk}"
+    FontFamily="Malgun Gothic"
+    FontSize="13">
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <DockPanel Margin="4,0,4,16">
+            <ui:Button
+                Content="설정·진단"
+                Icon="{ui:SymbolIcon Settings24}"
+                Appearance="Transparent"
+                DockPanel.Dock="Right"
+                Click="ShowSettings" />
+            <StackPanel>
+                <TextBlock Text="직원 얼굴 등록" FontSize="25" FontWeight="Bold"/>
+                <TextBlock Text="정면에서 시작해 안내에 따라 천천히 움직여 주세요." Style="{StaticResource StudioCaption}" Margin="0,5,0,0"/>
+            </StackPanel>
+        </DockPanel>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="7*"/>
+                <ColumnDefinition Width="3*" MinWidth="310" MaxWidth="390"/>
+            </Grid.ColumnDefinitions>
+            <Border Background="#142033" CornerRadius="12" Margin="0,0,16,0" ClipToBounds="True">
+                <ContentControl x:Name="AiHost" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
+            </Border>
+            <Border Grid.Column="1" Style="{StaticResource StudioCard}" Padding="18">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <ScrollViewer
+                        VerticalScrollBarVisibility="Visible"
+                        HorizontalScrollBarVisibility="Disabled"
+                        HorizontalContentAlignment="Stretch"
+                        PanningMode="VerticalOnly">
+                        <StackPanel Margin="0,0,24,0">
+                            <TextBlock Text="1  직원 선택" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                            <ui:Button
+                                x:Name="RefreshEmployees"
+                                Content="직원 조회"
+                                Appearance="Secondary"
+                                Click="LoadEmployees"
+                                HorizontalAlignment="Stretch" />
+                            <ComboBox
+                                x:Name="FaceEmployees"
+                                Margin="0,10,0,10"
+                                SelectionChanged="SelectEmployee"
+                                MaxDropDownHeight="250" />
+                            <TextBlock Text="사원번호" Style="{StaticResource StudioCaption}"/>
+                            <TextBox x:Name="Employee" IsReadOnly="True" BorderThickness="0" Background="Transparent" Margin="0,3,0,8"/>
+                            <TextBlock Text="이름" Style="{StaticResource StudioCaption}"/>
+                            <TextBox x:Name="PersonName" IsReadOnly="True" BorderThickness="0" Background="Transparent" Margin="0,3,0,8"/>
+                            <TextBlock
+                                x:Name="Status"
+                                Text="서버 DB 연결 후 직원을 조회하세요."
+                                TextWrapping="Wrap"
+                                Foreground="{StaticResource StudioMuted}" />
+                            <Separator/>
+                            <TextBlock Text="2  연속 얼굴 등록" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                            <TextBlock
+                                Text="좌우는 사용자 본인 기준입니다. 방향이 반대로 감지되면 설정에서 반전 보정을 확인하세요."
+                                Style="{StaticResource StudioCaption}"
+                                TextWrapping="Wrap"
+                                Margin="0,0,0,8" />
+                            <ContentControl x:Name="EnrollmentControlsHost" HorizontalContentAlignment="Stretch"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                    <StackPanel Grid.Row="1">
+                        <Separator/>
+                        <TextBlock Text="3  등록 저장" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        <ui:Button
+                            x:Name="SaveFace"
+                            Content="선택 직원 DB 저장"
+                            Icon="{ui:SymbolIcon Save24}"
+                            Appearance="Primary"
+                            Click="SaveDatabase"
+                            IsEnabled="False"
+                            HorizontalAlignment="Stretch"
+                            Padding="14,10" />
+                        <TextBlock Text="저장 후 클라이언트의 직원 기준에 자동 반영됩니다." Style="{StaticResource StudioCaption}" Margin="0,10,0,0"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

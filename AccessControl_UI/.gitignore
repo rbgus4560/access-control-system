@@ -1,0 +1,19 @@
+# 로컬 빌드 및 도구 캐시
+**/bin/
+**/obj/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.vs/
+.venv/
+*.user
+*.suo
+
+# 다운로드 모델과 로컬 실행 결과는 소스와 별도 관리
+**/model_cache/
+recordings/
+clips/
+remote_cache/
+.env
+.env.*
+!.env.example

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net10.0-windows</TargetFramework>
+        <UseWPF>true</UseWPF>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+    <ItemGroup>
+        <Compile Include="../Ui/*.cs" Link="Ui/%(Filename)%(Extension)"/>
+        <Compile Include="../Shared/PairingStore.cs" Link="Shared/PairingStore.cs"/>
+        <PackageReference Include="WPF-UI" Version="4.3.0"/>
+        <PackageReference Include="Npgsql" Version="8.0.9"/>
+        <Compile Include="../Network/*.cs" Link="Network/%(Filename)%(Extension)"/>
+        <Compile Include="../FaceService/*.cs" Link="FaceService/%(Filename)%(Extension)"/>
+    </ItemGroup>
+</Project>

@@ -1,0 +1,95 @@
+<!-- 관리 서버 화면입니다. 관제·직원 관리·DB/장치 설정과 목록 창의 배치를 정의합니다. -->
+<Window
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    x:Class="AccessControlServer.EmployeesWindow"
+    Title="직원·출입 권한 관리 · 서버"
+    Width="1120"
+    Height="760"
+    MinWidth="1000"
+    MinHeight="680"
+    WindowStartupLocation="CenterOwner"
+    FontFamily="Malgun Gothic"
+    Background="{StaticResource StudioBackground}"
+    Foreground="{StaticResource StudioInk}">
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="Margin" Value="0,4,8,4"/>
+        </Style>
+        <Style TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,5"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Padding" Value="6"/>
+        </Style>
+    </Window.Resources>
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <StackPanel>
+            <TextBlock Text="직원·출입 권한 관리" FontSize="24" FontWeight="Bold"/>
+            <TextBlock x:Name="EndpointLabel"/>
+            <TextBlock Text="직원을 선택해 기본 정보와 출입 권한을 수정하세요. 얼굴 등록은 서버의 얼굴 등록 메뉴에서 진행합니다." TextWrapping="Wrap"/>
+        </StackPanel>
+        <StackPanel x:Name="SearchArea" Grid.Row="1" Orientation="Horizontal" Margin="0,8,0,12">
+            <TextBlock Text="DB 비밀번호" VerticalAlignment="Center"/>
+            <PasswordBox x:Name="PasswordInput" Width="145" Margin="10,0,18,0"/>
+            <TextBox x:Name="SearchInput" Width="210" Margin="0,0,12,0" ToolTip="사원번호 또는 이름"/>
+            <ui:Button Appearance="Secondary" Content="검색·새로고침" Click="Search"/>
+            <ui:Button Appearance="Secondary" Content="신규 직원" Click="NewEmployee"/>
+        </StackPanel>
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="310"/>
+            </Grid.ColumnDefinitions>
+            <DataGrid
+                x:Name="Employees"
+                Margin="0,0,20,0"
+                AutoGenerateColumns="False"
+                IsReadOnly="True"
+                CanUserAddRows="False"
+                SelectionMode="Single"
+                SelectionChanged="SelectEmployee">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="사원번호" Binding="{Binding EmployeeNo}" Width="110"/>
+                    <DataGridTextColumn Header="이름" Binding="{Binding Name}" Width="*"/>
+                    <DataGridTextColumn Header="부서" Binding="{Binding Department}" Width="90"/>
+                    <DataGridTextColumn Header="직급" Binding="{Binding Position}" Width="75"/>
+                    <DataGridCheckBoxColumn Header="활성" Binding="{Binding IsActive}" Width="50"/>
+                    <DataGridCheckBoxColumn Header="출입 허용" Binding="{Binding AccessEnabled}" Width="70"/>
+                </DataGrid.Columns>
+            </DataGrid>
+            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel x:Name="EditArea">
+                    <TextBlock x:Name="EditTitle" Text="신규 직원" FontSize="18" FontWeight="Bold"/>
+                    <TextBlock Text="사원번호 필수"/>
+                    <TextBox x:Name="EmployeeNoInput" MaxLength="100"/>
+                    <TextBlock Text="이름 필수"/>
+                    <TextBox x:Name="NameInput" MaxLength="100"/>
+                    <TextBlock Text="부서 선택"/>
+                    <TextBox x:Name="DepartmentInput" MaxLength="100"/>
+                    <TextBlock Text="직급 선택"/>
+                    <TextBox x:Name="PositionInput" MaxLength="100"/>
+                    <CheckBox x:Name="ActiveInput" Content="활성 직원" IsChecked="True" Margin="0,18,0,10"/>
+                    <CheckBox x:Name="AccessInput" Content="출입 허용" IsChecked="False" Margin="0,0,0,10"/>
+                    <TextBlock Text="비활성 직원은 비교 대상에서 제외합니다. 활성 직원의 출입 불허는 식별 후 거부를 의미합니다." TextWrapping="Wrap"/>
+                    <ui:Button Appearance="Primary" x:Name="SaveButton" Content="신규 직원 저장" Click="SaveEmployee"/>
+                    <TextBlock x:Name="UpdatedLabel" TextWrapping="Wrap"/>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+        <TextBlock
+            x:Name="StatusLabel"
+            Grid.Row="3"
+            Text="비밀번호 입력 후 검색·새로고침을 눌러 주세요. 비밀번호는 이 창이 열려 있는 동안만 입력란에 유지됩니다."
+            TextWrapping="Wrap"
+            Margin="0,16,0,0" />
+    </Grid>
+</Window>

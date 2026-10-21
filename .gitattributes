@@ -1,0 +1,15 @@
+* text=auto
+*.cs text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.xaml text eol=lf
+*.csproj text eol=lf
+*.sql text eol=lf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+*.docx binary
+*.png binary
+*.dat binary
+*.task binary

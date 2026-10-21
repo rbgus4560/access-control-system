@@ -1,0 +1,321 @@
+<!-- 관리 서버 화면입니다. 관제·직원 관리·DB/장치 설정과 목록 창의 배치를 정의합니다. -->
+<Window
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    x:Class="AccessControlServer.MainWindow"
+    Title="Access Control · 12.3 · 서버 관제 · .NET 10"
+    Closing="WindowClosing"
+    Width="1440"
+    Height="940"
+    MinWidth="1120"
+    MinHeight="800"
+    Background="{StaticResource StudioBackground}"
+    Foreground="{StaticResource StudioInk}"
+    FontFamily="Malgun Gothic"
+    FontSize="13">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220"/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <Border Background="White" BorderBrush="{StaticResource StudioLine}" BorderThickness="0,0,1,0">
+            <DockPanel Margin="18,24,18,18">
+                <StackPanel DockPanel.Dock="Top">
+                    <TextBlock Text="ACCESS CONTROL" FontSize="17" FontWeight="Bold"/>
+                    <TextBlock Text="관리 서버" Style="{StaticResource StudioCaption}" Margin="0,6,0,22"/>
+                    <RadioButton
+                        Style="{StaticResource FlatNavItem}"
+                        GroupName="MainNav"
+                        Click="ShowMonitoring"
+                        IsChecked="True"
+                        x:Name="NavLive">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Video24" FontSize="19" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="실시간 관제" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </RadioButton>
+                    <TextBlock Text="직원 및 얼굴" Style="{StaticResource StudioCaption}" Margin="4,18,0,10"/>
+                    <RadioButton Style="{StaticResource FlatNavItem}" GroupName="MainNav" Click="ShowEmployees">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Person24" FontSize="19" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="직원·출입 권한" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource FlatNavItem}" GroupName="MainNav" Click="ShowEnrollment">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="PersonAdd24" FontSize="19" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="얼굴 등록" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </RadioButton>
+                    <TextBlock Text="기록 및 영상" Style="{StaticResource StudioCaption}" Margin="4,18,0,10"/>
+                    <RadioButton Style="{StaticResource FlatNavItem}" GroupName="MainNav" Click="ShowHistory">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Video24" FontSize="19" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="출입 기록" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource FlatNavItem}" GroupName="MainNav" Click="ShowTimeline">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Video24" FontSize="19" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="타임라인·클립" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource FlatNavItem}" GroupName="MainNav" Click="ShowRecordings">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Video24" FontSize="19" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="녹화 구간 목록" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </RadioButton>
+                </StackPanel>
+                <StackPanel DockPanel.Dock="Bottom" VerticalAlignment="Bottom">
+                    <RadioButton Style="{StaticResource FlatNavItem}" GroupName="MainNav" Click="ShowServerSettings">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Settings24" FontSize="19" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="서버 설정" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </RadioButton>
+                    <Separator/>
+                    <TextBlock Text="SERVER / CAM-01" FontWeight="SemiBold"/>
+                    <TextBlock Text="직원·권한·최종 출입 판정 관리" Style="{StaticResource StudioCaption}" Margin="0,6,0,0"/>
+                </StackPanel>
+                <Border/>
+            </DockPanel>
+        </Border>
+        <Grid Grid.Column="1" Margin="22,20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition/>
+                <RowDefinition Height="210"/>
+            </Grid.RowDefinitions>
+            <Grid Margin="0,0,0,18">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="실시간 관제" FontSize="27" FontWeight="Bold"/>
+                    <TextBlock
+                        x:Name="DashboardStatus"
+                        Text="서버 설정에서 DB와 수신 연결을 준비하세요."
+                        Style="{StaticResource StudioCaption}"
+                        Margin="0,6,0,0" />
+                </StackPanel>
+                <TextBlock
+                    x:Name="ServerClock"
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    FontSize="14"
+                    Foreground="{StaticResource StudioMuted}" />
+            </Grid>
+            <Grid Grid.Row="1" Margin="0,0,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="300"/>
+                </Grid.ColumnDefinitions>
+                <Border Background="#142033" CornerRadius="12" ClipToBounds="True" Margin="0,0,16,0">
+                    <Grid>
+                        <Image x:Name="ServerVideo" Stretch="Uniform"/>
+                        <StackPanel x:Name="VideoHint" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <ui:SymbolIcon Symbol="Video24" FontSize="42" Foreground="#8DABC9" HorizontalAlignment="Center"/>
+                            <TextBlock Text="카메라 영상 수신 대기" Foreground="#DCE5F3" FontSize="20" Margin="0,14,0,8"/>
+                            <TextBlock Text="클라이언트 연결 후 영상이 표시됩니다." Foreground="#9DAFCA" TextAlignment="Center"/>
+                        </StackPanel>
+                        <Border Background="#D0142033" VerticalAlignment="Top" Padding="16,12">
+                            <TextBlock x:Name="VideoStatus" Text="CAM-01 · 영상 수신 대기" Foreground="White" TextWrapping="Wrap"/>
+                        </Border>
+                    </Grid>
+                </Border>
+                <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <Border Style="{StaticResource StudioCard}" Padding="20" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Text="현재 출입 판정" Style="{StaticResource StudioHeading}"/>
+                                <TextBlock x:Name="DoorResult" Text="출입 판정 대기" FontSize="24" FontWeight="Bold" TextWrapping="Wrap"/>
+                                <TextBlock Text="등록 정보와 출입 권한을 서버에서 확인합니다." Style="{StaticResource StudioCaption}" Margin="0,12,0,0"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource StudioCard}" Padding="18">
+                            <StackPanel>
+                                <TextBlock Text="인증 클라이언트" Style="{StaticResource StudioHeading}"/>
+                                <TextBlock Text="CAM-01 · 출입구 카메라" FontWeight="SemiBold"/>
+                                <TextBlock
+                                    x:Name="TcpClientStatus"
+                                    Text="클라이언트 미연결"
+                                    TextWrapping="Wrap"
+                                    Margin="0,10,0,0"
+                                    Foreground="{StaticResource StudioMuted}" />
+                                <Separator/>
+                                <TextBlock x:Name="LiveResult" Text="분석 결과 대기" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                                <Expander Header="분석 상세" Margin="0,12,0,0">
+                                    <TextBlock
+                                        x:Name="LiveSummary"
+                                        Text="아직 수신한 분석 결과가 없습니다."
+                                        Margin="0,10,0,0"
+                                        TextWrapping="Wrap"
+                                        Foreground="{StaticResource StudioMuted}" />
+                                </Expander>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+            <Border Grid.Row="2" Style="{StaticResource StudioCard}" Padding="16">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <DockPanel Margin="0,0,0,8">
+                        <ui:Button DockPanel.Dock="Right" Content="전체 기록" Appearance="Secondary" Click="ShowHistory" Padding="10,5"/>
+                        <StackPanel>
+                            <TextBlock Text="최근 출입 기록" FontSize="16" FontWeight="SemiBold"/>
+                            <TextBlock
+                                x:Name="RecentStatus"
+                                Text="DB 조회 또는 새 판정 수신 후 표시됩니다."
+                                Style="{StaticResource StudioCaption}"
+                                Margin="0,4,0,0" />
+                        </StackPanel>
+                    </DockPanel>
+                    <DataGrid
+                        x:Name="RecentPreview"
+                        Grid.Row="1"
+                        IsReadOnly="True"
+                        AutoGenerateColumns="False"
+                        SelectionMode="Single"
+                        SelectionChanged="OpenRecentDetail">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="시각" Binding="{Binding 시각}" Width="170"/>
+                            <DataGridTextColumn Header="이름" Binding="{Binding 이름}" Width="100"/>
+                            <DataGridTextColumn Header="결과" Binding="{Binding 결과}" Width="100"/>
+                            <DataGridTextColumn Header="사유" Binding="{Binding 사유}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+        </Grid>
+        <Grid x:Name="AuxiliaryViews" Visibility="Collapsed">
+            <TabControl x:Name="SettingsControls">
+                <TabItem Header="DB·관리자">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="20">
+                            <TextBlock Text="DB 연결 및 관리자" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                            <TextBlock Text="이 서버 PC의 PostgreSQL에 연결합니다." Style="{StaticResource StudioCaption}" Margin="0,0,0,20"/>
+                            <WrapPanel x:Name="ConnectionFields" VerticalAlignment="Center">
+                                <StackPanel Margin="0,0,12,6">
+                                    <TextBlock Text="호스트" Style="{StaticResource StudioCaption}" Margin="0,0,0,4"/>
+                                    <TextBox x:Name="HostInput" Text="127.0.0.1" Width="120"/>
+                                </StackPanel>
+                                <StackPanel Margin="0,0,12,6">
+                                    <TextBlock Text="포트" Style="{StaticResource StudioCaption}" Margin="0,0,0,4"/>
+                                    <TextBox x:Name="PortInput" Text="5432" Width="65"/>
+                                </StackPanel>
+                                <StackPanel Margin="0,0,12,6">
+                                    <TextBlock Text="DB 이름" Style="{StaticResource StudioCaption}" Margin="0,0,0,4"/>
+                                    <TextBox x:Name="DatabaseInput" Text="access_control_system" Width="190"/>
+                                </StackPanel>
+                                <StackPanel Margin="0,0,12,6">
+                                    <TextBlock Text="계정" Style="{StaticResource StudioCaption}" Margin="0,0,0,4"/>
+                                    <TextBox x:Name="UsernameInput" Text="postgres" Width="100"/>
+                                </StackPanel>
+                                <StackPanel Margin="0,0,12,6">
+                                    <TextBlock Text="DB 비밀번호" Style="{StaticResource StudioCaption}" Margin="0,0,0,4"/>
+                                    <PasswordBox x:Name="PasswordInput" Width="155"/>
+                                </StackPanel>
+                            </WrapPanel>
+                            <WrapPanel Margin="0,4,0,10">
+                                <ui:Button
+                                    x:Name="LoadButton"
+                                    Content="DB 연결 및 목록 조회"
+                                    Appearance="Primary"
+                                    Click="LoadDatabase"
+                                    Margin="0,0,8,0" />
+                                <ui:Button Content="표시 초기화" Appearance="Secondary" Click="ClearDatabase" Margin="0,0,12,0"/>
+                                <TextBlock x:Name="DbStatus" Text="PostgreSQL · 미확인" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                            </WrapPanel>
+                            <WrapPanel Margin="0,0,0,10">
+                                <TextBlock Text="얼굴 등록 관리자" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <ComboBox x:Name="FaceAdmins" Width="240" SelectionChanged="SelectAdmin" VerticalContentAlignment="Center"/>
+                                <ui:Button Content="관리자 추가" Appearance="Secondary" Click="AddAdmin" Margin="10,0"/>
+                                <TextBlock x:Name="FaceDbStatus" Text="직원·얼굴 서비스 미연결" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Header="클라이언트 연결">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="20">
+                            <TextBlock Text="클라이언트 접속 설정" FontSize="20" FontWeight="SemiBold"/>
+                            <TextBlock
+                                Text="서버의 LAN 주소를 선택하고 수신을 시작한 뒤 연결 코드를 클라이언트에 전달하세요."
+                                Style="{StaticResource StudioCaption}"
+                                Margin="0,8,0,20" />
+                            <WrapPanel Margin="0,0,0,10">
+                                <TextBlock Text="서버 IPv4" VerticalAlignment="Center"/>
+                                <ComboBox x:Name="ServerAddress" Width="180" IsEditable="True" Margin="8,0"/>
+                                <ui:Button Content="클라이언트 연결 코드 복사" Click="CopyPairing"/>
+                            </WrapPanel>
+                            <WrapPanel>
+                                <TextBlock Text="LAN TLS · 기본 포트 :" VerticalAlignment="Center"/>
+                                <TextBox x:Name="TcpPort" Text="5050" Width="65" VerticalContentAlignment="Center" Margin="8,0"/>
+                                <ui:Button x:Name="TcpStart" Content="TCP 서버 시작" Appearance="Primary" Click="StartTcp" Margin="0,0,8,0"/>
+                                <ui:Button
+                                    x:Name="TcpStop"
+                                    Content="서버 중지"
+                                    Appearance="Secondary"
+                                    Click="StopTcp"
+                                    IsEnabled="False"
+                                    Margin="0,0,12,0" />
+                                <TextBlock x:Name="TcpStatus" Text="TCP 서버 중지" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+                <TabItem Header="등록 장치">
+                    <StackPanel Margin="20">
+                        <TextBlock Text="DB 등록 장치" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,20"/>
+                        <TabControl Height="330">
+                            <TabItem Header="클라이언트">
+                                <DataGrid x:Name="Clients"/>
+                            </TabItem>
+                            <TabItem Header="카메라">
+                                <DataGrid x:Name="Cameras"/>
+                            </TabItem>
+                        </TabControl>
+                        <TextBlock x:Name="DeviceCount" Text="조회 전" Margin="0,8,0,0"/>
+                        <TextBlock Text="DB 등록 상태이며 실제 연결 상태와 다를 수 있습니다." Style="{StaticResource StudioCaption}" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </TabItem>
+            </TabControl>
+            <Grid x:Name="HistoryControls" Margin="8">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                <DockPanel Margin="0,0,0,10">
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                        <ui:Button
+                            x:Name="HistoryRefresh"
+                            Content="기록 조회"
+                            Appearance="Secondary"
+                            Click="RefreshHistory"
+                            Margin="0,0,8,0" />
+                        <ui:Button
+                            x:Name="EventPlaybackButton"
+                            Content="선택 기록 영상"
+                            Icon="{ui:SymbolIcon Video24}"
+                            Appearance="Primary"
+                            Click="PlaySelectedEvent"
+                            Margin="0,0,8,0" />
+                        <ui:Button Content="이벤트 상세" Appearance="Secondary" Click="ShowDetail"/>
+                    </StackPanel>
+                    <StackPanel>
+                        <TextBlock Text="최근 출입 기록" FontSize="16" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="HistoryStatus" Text="DB 조회 전" Style="{StaticResource StudioCaption}" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </DockPanel>
+                <DataGrid x:Name="Events" Grid.Row="1" SelectionMode="Single" MouseDoubleClick="DoubleClickEvent"/>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

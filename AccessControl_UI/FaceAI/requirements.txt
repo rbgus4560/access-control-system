@@ -1,0 +1,15 @@
+# Python 3.11 x64; dlib is installed with conda-forge, not pip compilation.
+numpy==1.26.4
+setuptools==75.8.2
+deepface==0.0.93
+tensorflow==2.16.2
+tf-keras==2.16.0
+mediapipe==0.10.21
+opencv-python==4.11.0.86
+opencv-contrib-python==4.11.0.86
+# Avoid new JAX pulling ml-dtypes incompatible with TensorFlow 2.16.
+jax==0.4.28
+jaxlib==0.4.28
+protobuf==4.25.8
+mtcnn==0.1.1
+retina-face==0.0.17
