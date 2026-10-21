@@ -104,10 +104,10 @@ Python 검증 환경은 access_face_ai의 Python 3.11.17, NumPy 1.26.4, OpenCV 4
 ## 근거 문서
 
 - 초기 검증: AccessControl_FaceAI_Python/face_ai_python/README.md와 VALIDATION.md
-- 단계별 진행: VERIFIED_PROGRESS.md, VALIDATION_STAGE6~12 문서
-- 전환과 네트워크: MIGRATION_NET10.md, DEPLOY_TWO_PC.md, VALIDATION_TWO_PC.md
-- 장애 대응: TLS_WINDOWS_FIX.md, RECORDING_SYNC_FIX.md, UI_SYNC_CLIP_12_2_3_KO.md
-- 최신 구현: AUTO_IDENTIFICATION_12_3_KO.md, REFACTOR_12_3_KO.md, CODE_GUIDE_KO.md
+- 단계별 진행: history/VERIFIED_PROGRESS.md, VALIDATION_STAGE6~12 문서
+- 전환과 네트워크: history/MIGRATION_NET10.md, guides/DEPLOY_TWO_PC.md, validation/VALIDATION_TWO_PC.md
+- 장애 대응: fixes/TLS_WINDOWS_FIX.md, fixes/RECORDING_SYNC_FIX.md, fixes/UI_SYNC_CLIP_12_2_3_KO.md
+- 최신 구현: guides/AUTO_IDENTIFICATION_12_3_KO.md, history/REFACTOR_12_3_KO.md, guides/CODE_GUIDE_KO.md
 - 통합 정리: project-summary.md, troubleshooting.md, refactor-20261021.md
 
 Git 커밋 이력이 아닌 문서와 코드에 기반한 재구성이다. 원문 자료의 관찰·사용자 보고·자동 검사·미확인 사항을 구분해 보존한다.

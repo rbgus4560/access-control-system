@@ -1,0 +1,70 @@
+> 문서 정리 전 README를 보존한 이력입니다. 최신 안내는 [문서 목차](../README.md)를 참고하세요.
+
+## 프로젝트 분석 문서 (2026-10-21)
+
+- [두 프로젝트 전체 개발 과정](../development-history.md)
+- [개발 과정과 트러블슈팅 Word 보고서](../AccessControl_개발과정_및_리팩토링_보고서.docx)
+- [이번 리팩토링·파일 정리·검증 결과](../refactor-20261021.md)
+- [현재 구조·기능·실행 안내·검증 범위 통합 정리](../project-summary.md)
+- [트러블슈팅 통합 기록과 미확인 사항](../troubleshooting.md)
+
+아래 원문에는 과거 버전 설명이 포함되어 있다. 최신 12.3 구현과 과거 검증의 차이는 통합 정리의 문서 우선순위를 참고한다. 이번 정리는 소스·문서 분석이며 앱·DB·카메라를 재실행한 결과가 아니다.
+
+# 12.3 코드 정리본
+
+기능을 유지하며 코드 서식과 설명 주석을 정리했다. 적용 방법과 검사 범위는 [REFACTOR_12_3_KO.md](REFACTOR_12_3_KO.md), 코드 읽는 순서와 주요 용어는 [CODE_GUIDE_KO.md](../guides/CODE_GUIDE_KO.md)를 참고한다. 이번 정리로 추가 실행할 SQL은 없다. 아래 내용은 버전별 변경 이력이다.
+
+# 12.3 전체 직원 자동 식별(1:N)
+
+최신 적용 안내는 **docs/guides/AUTO_IDENTIFICATION_12_3_KO.md**. 인증 기준 선택 메뉴를 제거하고 서버의 등록 직원 전체를 자동 동기화한다. 카메라 연결 후 자동 보정·전체 직원 식별·서버 최종 권한 판정으로 이어진다. 이전 1:1 직원 선택 안내는 과거 버전 설명이다. 이번 버전의 서버·클라이언트·FaceAI를 함께 적용한다. 추가 DB 변경은 없다.
+
+# 12.2.4 클라이언트 자동 시작
+
+직원 기준을 불러오고 카메라·AI를 연결한 뒤 정면을 잠깐 유지하면 자동 보정·비교를 시작한다. 수동 비교 중지는 유지하며, 새 기준 또는 카메라 재연결 시 자동 시작을 다시 준비한다. 적용 순서는 **docs/history/AUTO_START_12_2_4_KO.md** 참고. 이전 12.2.3 수정도 포함한다. 실제 Windows 카메라 검증은 적용 후 필요하다.
+
+# 12.2.3 UI·녹화 동기화·클립 복구 수정
+
+이번 적용 순서는 **docs/fixes/UI_SYNC_CLIP_12_2_3_KO.md** 참고. 표 머리글 단색, 등록 화면 겹침 방지(12.2.2 포함), 정규 기존 녹화 경로 전환, 클립 실패 확정·재시도·한 PC 임시 파일 분리. 실제 과거 대기 건의 해소와 Windows 화면은 적용 후 확인한다.
+
+# 12.2.2 UI 정리·노트북 설치 안내
+
+등록 안내 헤더 분리, 등록 패널 스크롤바 여백, 클립 폴더 버튼 아래 고정 및 결과 스크롤. Python 소스 포함. docs/guides/LAPTOP_START_KO.md 참고. Windows 배율별 실기 확인 필요.
+
+# 2026-10-20 녹화 동기화 실패 격리
+
+구간별 실패 격리·시도 순서 순환·실패 표시·서버 로그 추가. 20건 실패 중 신규 구간 처리와 재시도 복구 회귀 시험 PASS, WPF 3개 빌드 PASS. 실제 사용자 DB 원인과 복구는 재검증 필요. docs/fixes/RECORDING_SYNC_FIX.md 참고.
+
+# 2026-10-20 Windows TLS 연결 수정
+
+Schannel 36869 개인 키 오류 대응: Windows PFX 로딩을 UserKeySet으로 변경. 기존 인증서·연결 토큰 유지. 적용 순서는 docs/fixes/TLS_WINDOWS_FIX.md 참고. Windows 실제 연결 재검증 대기.
+
+# 12.2.1 등록 창 시작 오류 수정
+
+등록 화면 재배치 중 안내 문구·진행률·메시지가 이전 패널의 자식으로 남아 새 패널에 중복 연결되는 초기화 오류를 수정했다. 앱을 닫고 이번 수정본을 새 폴더에 풀어 Start_Server.cmd로 다시 빌드한다. 추가 SQL·모델 설치는 필요 없다.
+
+등록 창 초기화 오류는 대화상자와 `%LOCALAPPDATA%\AccessControlSystem\enrollment-startup.log`에 표시한다. Check_Enrollment_UI.cmd는 Windows에서 실제 등록 창 생성과 설정 창 두 번 재열기를 점검한다. 카메라·AI·DB 작업은 시작하지 않는다. 이 검사는 Linux에서 실행하지 못했으며 실제 Windows 확인은 남아 있다.
+
+---
+
+# 얼굴 인식 출입 통제 · 12.2 두 PC 버전
+
+C#/.NET 10 WPF 관리 서버와 카메라 클라이언트를 LAN으로 연결하는 포트폴리오 데모. 기존 DB가 있는 학교 PC는 서버·직원/얼굴 등록·최종 출입 판정·관제·재생을 맡고, 다른 PC는 Python 얼굴 비교·로컬 녹화·클립 생성을 맡는다.
+
+**새 폴더에 압축 해제하고 [DEPLOY_TWO_PC.md](../guides/DEPLOY_TWO_PC.md) 순서로 적용한다.** 기존 정상 버전은 보존한다. 서버 DB에는 기존 SQL을 다시 생성하지 않고 `Database/15_recording_client_metadata.sql`만 추가 적용한다.
+
+| 실행 PC | 실행 스크립트 | 앱 |
+|---|---|---|
+| 기존 DB 학교 PC | Start_Server.cmd | 서버 (얼굴 등록 앱은 서버 메뉴에서 열기) |
+| 다른 카메라 PC | Start_Client.cmd | 출입 인증 클라이언트 |
+
+- 1:1 얼굴 비교·서버 최종 허가/거부·등록 기준 배포
+- TLS 1.2/1.3·서버 인증서 지문 확인·장치 공유 키, Windows 사용자별 DPAPI 설정 보호
+- 판정 5050·JPEG 5051·얼굴/녹화/파일 API 5052 (기본값)
+- 클라이언트 MP4 원본과 서버 DB 메타데이터, 요청 구간 재생 캐시, 클라이언트 추출 클립의 검증된 서버 사본
+- 서버 종료 중 클라이언트 녹화·미전송 정보 재동기화·원본 72시간 보관 정리
+
+기술: .NET 10 / C# / WPF / WPF-UI 4.3.0 / Npgsql / PostgreSQL / TCP·SslStream / Python 3.11 / dlib / MediaPipe / DeepFace ArcFace / OpenCV. 모델·비교 임계값·대표 샘플 선별 기준을 유지하며, 12.2에서는 안내 중인 방향만 수집하고 정면 복귀 후 다음 방향으로 진행한다.
+
+화면 변경과 지금 확인할 순서: [UI_ROLE_12_2.md](UI_ROLE_12_2.md).
+
+구현/검사 기록: [VALIDATION_TWO_PC.md](../validation/VALIDATION_TWO_PC.md). 실제 Windows 두 PC 시연 검증은 별도 수행한다. 이전 단일 PC 문서와 적용 절차는 [HISTORY_SINGLE_PC.md](HISTORY_SINGLE_PC.md)에 보존했으며 12.2 실행 절차보다 우선하지 않는다.

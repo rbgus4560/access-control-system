@@ -9,6 +9,7 @@ Python 얼굴 AI 검증 도구와 C# WPF 기반 출입 통제 통합 프로젝�
 
 ## 문서
 
+- [전체 문서 목차](AccessControl_UI/docs/README.md)
 - [전체 개발 과정](AccessControl_UI/docs/development-history.md)
 - [개발 과정과 트러블슈팅 Word 보고서](AccessControl_UI/docs/AccessControl_개발과정_및_리팩토링_보고서.docx)
 - [시스템 구성과 핵심 기능](AccessControl_UI/docs/project-summary.md)
@@ -19,7 +20,7 @@ Python 얼굴 AI 검증 도구와 C# WPF 기반 출입 통제 통합 프로젝�
 
 통합 앱은 AccessControl_UI 안의 Start_Server.cmd와 Start_Client.cmd를 사용한다. 최초 의존성 복원과 빌드를 수행한다. 기존 PostgreSQL과 대상 Python 3.11 access_face_ai 환경, 모델 준비가 필요하며 DB 초기 생성·사용자 계정·설정은 별도로 확인한다.
 
-최신 12.3은 전체 직원 기준을 자동 동기화한다. [최신 안내](AccessControl_UI/AUTO_IDENTIFICATION_12_3_KO.md)를 우선하고 [기존 LAN 배치 문서](AccessControl_UI/DEPLOY_TWO_PC.md)의 수동 1:1 선택 부분은 과거 설명으로 읽는다. 독립 도구 사용법은 [Python README](AccessControl_FaceAI_Python/face_ai_python/README.md)를 참고한다.
+최신 12.3은 전체 직원 기준을 자동 동기화한다. [최신 안내](AccessControl_UI/docs/guides/AUTO_IDENTIFICATION_12_3_KO.md)를 우선하고 [기존 LAN 배치 문서](AccessControl_UI/docs/guides/DEPLOY_TWO_PC.md)의 수동 1:1 선택 부분은 과거 설명으로 읽는다. 독립 도구 사용법은 [Python README](AccessControl_FaceAI_Python/face_ai_python/README.md)를 참고한다.
 
 ## 이번 검증
 

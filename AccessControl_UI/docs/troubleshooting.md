@@ -32,7 +32,7 @@
 - 시도·결과: Python AI 전용 스레드와 C# 연동 검사 → 시작 단계별 로그·스택 진단 추가 → 카메라 열기 전 메인 스레드에서 SciPy·MediaPipe·DeepFace 준비 순서로 보완. 후속 문서에 Windows 영상·메시 작동 확인이 있지만 단일 변경의 인과관계까지 입증하지 않음.
 - 검증: 원문에 관련 검사·WPF 빌드 및 실제 모델 Linux 연동 통과 기록. Windows 준비 지연 재현·근본 원인 검증은 별도.
 - 배운 점/후속: 멈춤을 무조건 모델 오류로 단정하지 않고 import 단계와 호출 위치로 범위를 좁힌다. 재발 시 시작 로그·스택을 확보한다.
-- 근거: [6단계 기록](../VALIDATION_STAGE6.md), [시작 진단](../FaceAI/startup_diagnostics.py), [WPF 브리지](../FaceAI/wpf_bridge.py).
+- 근거: [6단계 기록](validation/VALIDATION_STAGE6.md), [시작 진단](../FaceAI/startup_diagnostics.py), [WPF 브리지](../FaceAI/wpf_bridge.py).
 
 ## TS-02 · 아래 방향 얼굴 검출 끊김
 - 시점/환경: 2026-10-18~20, 실제 Windows 카메라 등록.
@@ -41,7 +41,7 @@
 - 대응: 축소 HOG 0회 확대 검출이 비면 1회 확대 재검출. 정상 검출에는 추가 비용을 피하고 다중 검출은 유지해 거부.
 - 검증: 재시도 함수와 회귀 테스트 소스 존재, 원문 통과 기록. 실제 아래 방향의 정확도·시간 개선은 입증되지 않음.
 - 후속: 카메라·각도·조명·얼굴 크기·reason·검출 시간 기록 후 동일 조건 비교. 샘플 수 증가를 검출 개선으로 표현하지 않는다.
-- 근거: [6단계 기록](../VALIDATION_STAGE6.md), [검출 코드](../FaceAI/dlib_fast.py), [검사](../FaceAI/tests/test_detector_retry.py), [최신 한계](../REFACTOR_12_3_KO.md).
+- 근거: [6단계 기록](validation/VALIDATION_STAGE6.md), [검출 코드](../FaceAI/dlib_fast.py), [검사](../FaceAI/tests/test_detector_retry.py), [최신 한계](history/REFACTOR_12_3_KO.md).
 
 ## TS-03 · AI 미연결 시 임시 얼굴 기준 전달 실패
 - 시점: 2026-10-18, 과거 단일 PC 6.5.
@@ -50,7 +50,7 @@
 - 검증: Checks 계약 검사 통과 기록. 당시 Linux Named Pipe 검사는 Unix 소켓 AccessDenied로 실행하지 못함. Windows 확인과 구분.
 - 현재: 12.3 주 인증 흐름은 서버 DB 기준 자동 동기화다. 과거 Named Pipe 절차를 최신 사용법으로 안내하지 않는다.
 - 배운 점/후속: 전송 수신과 AI 적용 완료를 분리한다. 최신 흐름은 GallerySynchronizer와 AI ACK로 확인.
-- 근거: [6단계 기록](../VALIDATION_STAGE6.md), [과거 수신함](../Shared/ReferenceInbox.cs).
+- 근거: [6단계 기록](validation/VALIDATION_STAGE6.md), [과거 수신함](../Shared/ReferenceInbox.cs).
 
 ## TS-04 · 실시간 영상과 느린 분석 결과의 시차
 - 시점: Python 검증 v2~v3, 정확한 발생일 미상.
@@ -58,7 +58,7 @@
 - 대응: 영상 표시와 분석을 분리하고 최신 대기 프레임만 유지, 분석 프레임과 나이를 표시하며 오래된 결과를 숨김. 카메라·WPF 연동 방식은 버전별 기록과 구분.
 - 검증: 과거 비동기·합성 입력·실제 모델 검사 기록. Linux GUI 대체 루프 수치를 Windows UI FPS로 사용하지 않음.
 - 배운 점/후속: UI 갱신률과 추론 처리량은 다른 지표. 실제 카메라에서 처리 시간과 프레임 나이를 함께 측정.
-- 근거: [AI 설명](../FaceAI/README.md), [AI 검증](../FaceAI/VALIDATION.md), [AI 작업자](../FaceAI/ai_worker.py), [최신성 판정](../Network/AccessDecision.cs).
+- 근거: [AI 설명](../FaceAI/README.md), [AI 검증](validation/FACEAI_VALIDATION.md), [AI 작업자](../FaceAI/ai_worker.py), [최신성 판정](../Network/AccessDecision.cs).
 
 ## TS-05 · 등록 창 시작 시 부모 컨트롤 중복 연결
 - 시점: 12.2 → 12.2.1, 정확한 발생일 미상.
@@ -74,7 +74,7 @@
 - 원인: UI 배치·스타일 문제로 기록. 얼굴 모델·DB 원인으로 해석하지 않음.
 - 검증: 과거 빌드 기록. Windows 배율별 잘림·겹침과 최신 화면은 실기 확인 필요.
 - 배운 점/후속: 논리 UI 트리 확인과 실제 배율별 가독성 검증을 구분.
-- 근거: [12.2.3 수정](../UI_SYNC_CLIP_12_2_3_KO.md), [노트북 안내](../LAPTOP_START_KO.md).
+- 근거: [12.2.3 수정](fixes/UI_SYNC_CLIP_12_2_3_KO.md), [노트북 안내](guides/LAPTOP_START_KO.md).
 
 ## TS-07 · TLS 포트는 열리지만 앱 재접속·EOF
 - 시점/환경: 2026-10-20, Windows Schannel.
@@ -83,7 +83,7 @@
 - 대응: PairingStore의 Windows PFX 로딩을 EphemeralKeySet에서 UserKeySet으로 변경하고 개인 키 존재 검사. 다른 OS는 기존 방식 유지. 기존 인증서·연결 토큰 보존.
 - 검증: Linux 교차 빌드 통과 기록. 이것은 Windows Schannel 실기 성공 증명이 아님. 이후 전체 사용자 동작 기록만으로 해당 경로를 독립 검증했다고 단정하지 않음.
 - 배운 점/후속: 포트 도달과 TLS 인증은 별개. 같은 Windows 계정에서 연결·직원 조회·영상·판정까지 확인.
-- 근거: [수정 기록](../TLS_WINDOWS_FIX.md), [PairingStore](../Shared/PairingStore.cs).
+- 근거: [수정 기록](fixes/TLS_WINDOWS_FIX.md), [PairingStore](../Shared/PairingStore.cs).
 
 ## TS-08 · 과거 녹화 실패가 신규 구간 전송을 막음
 - 시점: 2026-10-20.
@@ -92,7 +92,7 @@
 - 검증: 실패 20건 뒤 신규 1건 처리, 복구 뒤 21건 ACK·중복 없음 검사 통과 기록. 최신 정리 문서는 사용자 환경 대기 0 확인을 기록.
 - 남은 점: 대기 해소가 개별 과거 건의 원인을 모두 규명했다는 뜻은 아님.
 - 배운 점/후속: 한 실패가 전체 큐를 막지 않도록 하고 공정한 재시도·관측 가능한 오류를 함께 설계.
-- 근거: [실패 격리 기록](../RECORDING_SYNC_FIX.md), [동기화](../FaceRecognition/RecordingSync.cs), [최신 사용자 기록](../REFACTOR_12_3_KO.md).
+- 근거: [실패 격리 기록](fixes/RECORDING_SYNC_FIX.md), [동기화](../FaceRecognition/RecordingSync.cs), [최신 사용자 기록](history/REFACTOR_12_3_KO.md).
 
 ## TS-09 · 로컬 원본 경로에서 원격 키로의 전환 충돌
 - 시점: 12.2.3.
@@ -100,7 +100,7 @@
 - 대응: 구간 ID·카메라·시각·상태 전이가 맞고 기존 경로가 서버의 정규 원본 경로일 때만 원격 키로 전환. 임의 경로와 상태 역행은 거부.
 - 검증: 실제 UPSERT의 격리 PostgreSQL WASM 검사 통과 기록. 실제 과거 대기 15건 모두의 원인이 경로였는지는 미확정. 이후 대기 0 기록은 TS-08 참고.
 - 배운 점/후속: 경로 마이그레이션도 식별자와 상태 불변식을 보존. 문제 재발 시 구간 ID·서버 로그로 개별 확인.
-- 근거: [수정 기록](../UI_SYNC_CLIP_12_2_3_KO.md), [DB 코드](../AccessControlServer/RecordingDatabase.cs), [SQL 검사](../DbChecks/recording_upsert.mjs).
+- 근거: [수정 기록](fixes/UI_SYNC_CLIP_12_2_3_KO.md), [DB 코드](../AccessControlServer/RecordingDatabase.cs), [SQL 검사](../DbChecks/recording_upsert.mjs).
 
 ## TS-10 · 오래된 클립 요청이 대기 상태에 남음
 - 시점: 12.2.3 및 12.3 정리 전.
@@ -108,7 +108,7 @@
 - 대응: 영구 실패는 FAILED·사유로 확정하고 DB 반영 성공 뒤 해당 작업만 정리. 통신·공간·실행 오류는 재시도 상태로 유지. 재시작 후 실패 결과의 DB 반영도 재시도.
 - 검증: TLS·중단·DB 실패 재시도 검사 기록. 최신 문서는 파일·결과 없는 과거 3건을 DB FAILED로 정리했다고 기록. 실제 모든 과거 요청이 자동 복구되었다는 주장은 하지 않음.
 - 배운 점/후속: 재시도 가능한 장애와 완료 불가능한 요청을 구분. FAILED는 성공한 클립이 아니며 범위를 바꿔 새 요청.
-- 근거: [수정 기록](../UI_SYNC_CLIP_12_2_3_KO.md), [최신 기록](../REFACTOR_12_3_KO.md), [미디어 조정](../AccessControlServer/MediaCoordinator.cs).
+- 근거: [수정 기록](fixes/UI_SYNC_CLIP_12_2_3_KO.md), [최신 기록](history/REFACTOR_12_3_KO.md), [미디어 조정](../AccessControlServer/MediaCoordinator.cs).
 
 ## TS-11 · 임시 클립 경로 간섭·불완전 출력
 - 시점: 12.2.3.
@@ -116,7 +116,7 @@
 - 대응: 서버 clips와 클라이언트 clips/client_temp 분리. 불완전 임시 출력은 해당 파일만 정리하고 재시도. 전송 검증·서버 확인 뒤 임시 파일 정리.
 - 검증: 동일 PC 서버 사본 보존과 불완전 클립 복구·합성 MP4 검사 통과 기록. 실제 사용자 파일 재현은 미확인.
 - 배운 점/후속: 파일 소유 주체와 수명·ACK를 분리. 사용자의 원본·서버 사본을 일괄 삭제하지 않는다.
-- 근거: [수정 기록](../UI_SYNC_CLIP_12_2_3_KO.md), [추출](../FaceRecognition/ClipExporter.cs), [Python 추출 검사](../FaceAI/tests/test_clip_export.py).
+- 근거: [수정 기록](fixes/UI_SYNC_CLIP_12_2_3_KO.md), [추출](../FaceRecognition/ClipExporter.cs), [Python 추출 검사](../FaceAI/tests/test_clip_export.py).
 
 ## TS-12 · 등록 안내와 후보 수집 순서 불일치
 - 시점: 2026-10-19, 12.2.
@@ -124,7 +124,7 @@
 - 대응: 현재 안내 방향만 수집하고 일부 방향 완료 후 정면 복귀를 확인. 품질·각도 차이로 대표 샘플 선택.
 - 검증: 원문 Python 검사·WPF 빌드 통과 기록. 과거 사용자 9/9 저장·수신 기록은 있으나 최신 방향 부호·배율별 UI·본인/타인 평가를 모두 대신하지 않음.
 - 배운 점/후속: 등록 개수, 방향 종류, 검출 정확도를 구분. 실제 움직임과 화면 안내 일치 확인.
-- 근거: [UI 12.2](../UI_ROLE_12_2.md), [안내형 등록](../FaceAI/guided_enrollment.py), [사용자 기록](../VERIFIED_PROGRESS.md).
+- 근거: [UI 12.2](history/UI_ROLE_12_2.md), [안내형 등록](../FaceAI/guided_enrollment.py), [사용자 기록](history/VERIFIED_PROGRESS.md).
 
 ## TS-13 · SDK·소스 갱신 뒤 옛 경로 혼용
 - 시점: 2026-10-19 이후 .NET 10·12.3 전환.
@@ -132,7 +132,7 @@
 - 대응: 시작 스크립트와 등록 EXE 탐색을 net10.0-windows로 변경. AI 경로는 현재 배포본, 기존 Conda·모델 캐시는 유지 안내.
 - 검증: 과거 .NET 10 제목·얼굴 기준·영상·READY 사용자 확인 기록. 최신 전체 시연은 별도.
 - 배운 점/후속: 실행 파일·소스·모델·DB 버전을 함께 확인. DB·기존 모델을 불필요하게 재생성하지 않는다.
-- 근거: [전환 기록](../MIGRATION_NET10.md), [12.3 안내](../AUTO_IDENTIFICATION_12_3_KO.md), [시작 스크립트](../Start_Server.cmd).
+- 근거: [전환 기록](history/MIGRATION_NET10.md), [12.3 안내](guides/AUTO_IDENTIFICATION_12_3_KO.md), [시작 스크립트](../Start_Server.cmd).
 
 ## TS-14 · 부분 기준·오래된 결과·모호 후보 처리
 - 구분: 12.3 예방 설계 및 회귀 시나리오. 실제 오허가 사고가 확인된 기록은 아님.
@@ -140,14 +140,14 @@
 - 대응: 목록 이중 확인·서버 세션·연결 세대 확인, C#/Python 전체 배치 적용 ACK, 2위 거리 차이 보류, 서버 토큰·최신성·DB 권한 재검증.
 - 검증: 기존 동기화·작업자 대역·TLS 검사 통과 기록. 실제 다양한 사람의 임계값 평가는 미수행.
 - 배운 점/후속: 일치 후보와 최종 허가를 분리하고 불완전 상태를 보류. 실제 평가 데이터로 임계값 검토.
-- 근거: [동기화](../FaceRecognition/GallerySynchronizer.cs), [갤러리](../FaceAI/face_gallery.py), [최종 판정](../AccessControlServer/AccessEventDatabase.cs), [12.3 검사 범위](../AUTO_IDENTIFICATION_12_3_KO.md).
+- 근거: [동기화](../FaceRecognition/GallerySynchronizer.cs), [갤러리](../FaceAI/face_gallery.py), [최종 판정](../AccessControlServer/AccessEventDatabase.cs), [12.3 검사 범위](guides/AUTO_IDENTIFICATION_12_3_KO.md).
 
 ## TS-15 · 사용 중인 녹화의 보관 정리 충돌
 - 구분: 예방 설계 및 검사 시나리오. 실제 사용자 원본 손실은 확인되지 않음.
 - 조건/대응: 완료 후 72시간 만료 원본만 대상으로 하고 재생·전송 중 파일은 보류. 삭제 진행 상태와 결과를 기록해 중간 종료에 대응.
 - 검증: 임시 파일 보관 검사 PASS의 사용자 보고. 실제 운영 DB DELETED 전이·복구 확인과 구분.
 - 배운 점/후속: 파일 삭제와 메타데이터 상태를 함께 관리. 실제 만료 데이터 확인은 별도 승인된 시연에서 수행.
-- 근거: [보관 정책](../FaceService/RecordingRetention.cs), [검사](../RetentionChecks/Program.cs), [사용자 기록](../VERIFIED_PROGRESS.md).
+- 근거: [보관 정책](../FaceService/RecordingRetention.cs), [검사](../RetentionChecks/Program.cs), [사용자 기록](history/VERIFIED_PROGRESS.md).
 
 ## TS-16 · 버전별 문서가 최신 상태와 충돌
 - 발견일: 2026-10-21, 이번 정적 분석.
@@ -156,7 +156,7 @@
 - 조치: 기존 문서를 삭제하지 않고 project-summary.md에 최신 기준·우선순위와 차이를 명시.
 - 검증: face_gallery.py·GallerySynchronizer.cs·dlib_fast.py와 해당 문서를 대조. 앱 동작 검증은 미수행.
 - 배운 점/후속: 변경 기록과 현재 사용법을 구분. 새 변경 시 통합 요약과 해당 문제의 검증 상태를 함께 갱신.
-- 근거: [통합 요약](project-summary.md), [과거 배치](../DEPLOY_TWO_PC.md), [기존 AI README](../FaceAI/README.md), [최신 안내](../AUTO_IDENTIFICATION_12_3_KO.md).
+- 근거: [통합 요약](project-summary.md), [과거 배치](guides/DEPLOY_TWO_PC.md), [기존 AI README](../FaceAI/README.md), [최신 안내](guides/AUTO_IDENTIFICATION_12_3_KO.md).
 
 ## TS-17 · 잘못 선택한 Python 환경의 클립 검사 실패
 - 발견일: 2026-10-21, 이번 리팩토링 검증.
