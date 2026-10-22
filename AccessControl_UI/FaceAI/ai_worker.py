@@ -364,7 +364,8 @@ def run_worker(frames, commands, results, stop, config, engine_factory=None):
                         )
                         if enrollment.wants(adjusted, float(getattr(obs, "blur", 0)), captured_at):
                             feature_started = time.perf_counter()
-                            feature = engine.embedding(obs)
+                            # 정면 복귀는 각도 확인만 필요합니다. 새 등록 특징은 다음 방향에서 추출합니다.
+                            feature = None if enrollment.returning else engine.embedding(obs)
                             embedding_ms = (time.perf_counter() - feature_started) * 1000
                             if time.monotonic() - captured_at <= RESULT_MAX_AGE:
                                 try:
@@ -478,6 +479,14 @@ def run_worker(frames, commands, results, stop, config, engine_factory=None):
                     ),
                     "auto_enrollment": continuous,
                     "guided_enrollment": guided,
+                    "enrollment_hint": (
+                        enrollment.hint(
+                            (angles[0] * config["pitch_sign"], angles[1] * config["yaw_sign"], angles[2]),
+                            float(getattr(obs, "blur", 0)),
+                        )
+                        if guided and valid and enrollment.pending is not None
+                        else ""
+                    ),
                     "accepted_candidates": enrollment.accepted if guided else 0,
                     "export_reference": exported,
                     "reference_label": reference_label,

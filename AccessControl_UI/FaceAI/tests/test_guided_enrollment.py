@@ -149,6 +149,36 @@ class GuidedTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate_reference(bad)
 
+    def test_down_sweep_at_bridge_frame_interval_keeps_both_viewpoints(self):
+        e = GuidedEnrollment()
+        e.start()
+        self.offer(e, (0, 0, 0), 0)
+        # 이전 단계가 완료되고 정면으로 복귀한 뒤 5Hz 분석 주기로 아래를 봅니다.
+        for direction in ("LEFT", "RIGHT", "UP"):
+            e.pending[direction] = self.vector.copy()
+            e.pending[direction + "#2"] = self.vector.copy()
+        e.returning = True
+        e.last_time = 1.8
+        self.offer(e, (0, 0, 0), 2.0)
+        self.offer(e, (10, 0, 0), 2.2)
+        done = self.offer(e, (20, 0, 0), 2.4)
+        self.assertTrue(done)
+        self.assertEqual(set(e.active), set(GUIDED_POSES))
+
+    def test_deep_first_sample_requests_shallower_view_without_relaxing_quality(self):
+        e = GuidedEnrollment()
+        e.start()
+        self.offer(e, (0, 0, 0), 0)
+        for direction in ("LEFT", "RIGHT", "UP"):
+            e.pending[direction] = self.vector.copy()
+            e.pending[direction + "#2"] = self.vector.copy()
+        self.offer(e, (24, 0, 0), 1)
+        self.assertIn("정면 쪽", e.hint((24, 0, 0), 80))
+        self.assertFalse(e.wants((16, 0, 0), 20, 2))
+        with self.assertRaises(ValueError):
+            self.offer(e, (16, 0, 0), 2, vector=self.other)
+        self.assertTrue(self.offer(e, (16, 0, 0), 2))
+
     def test_real_worker_moving_frames_no_stability_and_export(self):
         from face_engine import Observation
 

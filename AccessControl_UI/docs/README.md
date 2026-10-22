@@ -61,3 +61,4 @@
 - [UI_ROLE_12_2.md — 12.2 · 큰 등록 카메라·목록형 메뉴·방향 안내 순서](history/UI_ROLE_12_2.md)
 - [VERIFIED_PROGRESS.md — 12.3 전체 직원 자동 식별(1:N)](history/VERIFIED_PROGRESS.md)
 
+- [아래 방향 등록 정체 개선과 적용 방법](fixes/GUIDED_DOWN_20261022_KO.md)

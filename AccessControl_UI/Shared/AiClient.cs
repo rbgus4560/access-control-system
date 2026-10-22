@@ -69,6 +69,9 @@ public sealed class AiState
     [JsonPropertyName("guided_enrollment")]
     public bool GuidedEnrollment { get; set; }
 
+    [JsonPropertyName("enrollment_hint")]
+    public string EnrollmentHint { get; set; } = "";
+
     [JsonPropertyName("accepted_candidates")]
     public int AcceptedCandidates { get; set; }
 

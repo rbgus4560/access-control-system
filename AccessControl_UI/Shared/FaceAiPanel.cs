@@ -827,6 +827,10 @@ public sealed class FaceAiPanel : UserControl, IAsyncDisposable
                 : state.ReferenceCount == 9
                     ? "샘플 준비 완료 · 선택 직원을 확인하고 DB 저장을 누르세요."
                 : "정면을 바라본 상태에서 등록 시작을 누르세요.";
+            // 전체 진행률은 두 샘플이 선택된 뒤에 오릅니다. 그 전에도 부족한 각도를 안내합니다.
+            if (fresh && state.Enrolling && state.GuidedEnrollment && state.Reason == "OK"
+                && !string.IsNullOrWhiteSpace(state.EnrollmentHint))
+                coverageHint.Text = state.EnrollmentHint;
             foreach (var (key, row) in stages)
             {
                 int required =

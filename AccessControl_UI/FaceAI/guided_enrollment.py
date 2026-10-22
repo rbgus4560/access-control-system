@@ -61,20 +61,56 @@ class GuidedEnrollment(Enrollment):
         # Only collect the displayed stage. Other directions must never silently pre-complete.
         if bucket is None or bucket != self.expected:
             return False
+        if self.returning:
+            # 정면 복귀는 시점 전환입니다. 직전 특징 추출의 대기 시간으로 놓치지 않습니다.
+            return True
         if bucket == "FRONT" and "FRONT" in self.pending and not self.returning:
-            return False
-        if now - self.last_time < 0.45:
             return False
         # Repeated redraws/near-identical viewpoints do not trigger ArcFace work.
         samples = self.candidates.get(bucket, [])
+        axis = 1 if bucket in ("LEFT", "RIGHT") else 0
+        diverse = bucket != "FRONT" and (
+            not samples or any(abs(angles[axis] - c[0][axis]) >= 7 for c in samples)
+        )
+        # 브리지는 0.2초마다 분석합니다. 새 각도까지 0.45초 기다리면 얕은 각도를
+        # 놓쳐 깊은 각도 하나만 남습니다. 새 시점은 다음 분석에서, 품질 갱신은 기존 간격으로 받습니다.
+        if now - self.last_time < (0.18 if diverse else 0.45):
+            return False
         return not any(math.dist(angles[:2], c[0]) < 3 and quality < c[1] * 1.2 for c in samples)
+
+    def hint(self, angles, quality):
+        """수집이 멈춘 이유와 다음 동작을 안내합니다. 품질·동일인 기준은 완화하지 않습니다."""
+        expected = self.expected
+        if expected is None:
+            return ""
+        if expected == "FRONT":
+            return "정면으로 돌아와 주세요." if self.returning else "정면을 바라보고 잠시 멈춰 주세요."
+        name = {"LEFT": "왼쪽", "RIGHT": "오른쪽", "UP": "위", "DOWN": "아래"}[expected]
+        if not np.isfinite(angles).all():
+            return "각도 분석 대기 · 얼굴이 카메라에 보이도록 해 주세요."
+        p, y, r = angles
+        if abs(r) > 12:
+            return "고개가 옆으로 기울었습니다. 수평을 유지해 주세요."
+        if abs(p) > 32 or abs(y) > 38:
+            return "너무 많이 움직였습니다. 정면 쪽으로 조금 돌아와 주세요."
+        if not math.isfinite(quality) or quality < 35:
+            return "선명도 부족 · 천천히 움직이고 조명을 확인해 주세요."
+        samples = self.candidates.get(expected, [])
+        if not samples:
+            return f"{name} 방향 첫 샘플 대기 · 작게 움직인 뒤 잠시 멈춰 주세요."
+        axis = 1 if expected in ("LEFT", "RIGHT") else 0
+        reach = max(abs(c[0][axis]) for c in samples)
+        current = abs(angles[axis])
+        if reach >= (18 if axis == 1 else 14) and current > 8:
+            return f"{name} 방향 첫 샘플 확보 · 정면 쪽으로 조금 돌아오며 다른 각도를 보여 주세요."
+        return f"{name} 방향 첫 샘플 확보 · 같은 방향으로 조금 더 움직여 주세요."
 
     def offer(self, angles, feature, quality, now):
         if not self.wants(angles, quality, now):
             return False
         if self.returning:
             self.returning = False
-            self.last_time = now
+            # 복귀 확인은 특징 추출이 아니므로 다음 방향의 첫 샘플을 지연시키지 않습니다.
             self.last_angles = tuple(angles)
             return False
         vector = unit_embedding(feature)
