@@ -179,3 +179,25 @@
 ## 이후 기록 원칙
 
 새 문제는 위 형식에 환경·재현 조건·원문 오류·원인 근거·실패한 시도·수정·검증·배운 점을 추가한다. 기존 항목 재발이면 경과를 추가하고 검증 전에는 해결 완료로 바꾸지 않는다. 개인 식별 정보, 얼굴 특징, 연결 코드와 비밀번호는 기록하지 않는다. 개별 커밋 링크는 Git 이력을 확인하지 못해 연결하지 않았다.
+
+## TS-19 · 진단 환경의 DPAPI 실패
+- 발생일/상태: 2026-10-22, 검사 환경 원인 확인·해결.
+- 증상/환경: sandbox의 StartupChecks에서 CurrentUser 암호화 실패. Windows 사용자 프로필 컨텍스트 차이가 가설이었다.
+- 시도/근거: 제품 암호화를 약화시키지 않고 실제 Windows 사용자 컨텍스트에서 동일 합성 데이터 검사 재실행. 6개 전부 PASS.
+- 후속: 운영 계정에서 사용하며 설정 파일을 타 PC에 복사하지 않는다. NuGet 취약점 서비스 접근 불가 NU1900은 별도 온라인 조회 제한으로 남김.
+- 관련: ServerSettingsStore.cs, StartupChecks, 12.4 검증 기록.
+
+## TS-20 · WPF 미리보기 배경 및 여백 누락
+- 발생일/상태: 2026-10-22, 해결.
+- 증상: Content만 렌더링한 PNG에서 부모 배경이 투명/검정으로 보이고 여백이 잘림.
+- 원인/시도: 자식만 캡처하는 방식의 렌더링 범위가 원인. 창 렌더링과 Content 여백을 포함한 치수로 수정.
+- 검증/배운 점: 서버·클라이언트·등록 및 보조 창의 기본/최소 크기 PNG를 재생성·시각 확인. 직원 편집은 가로 스크롤을 막고 저장 버튼을 스크롤 밖으로 이동했다. 캡처는 실제 카메라 동작 검사가 아니다.
+- 관련: Shared/UiPreviewCapture.cs, EmployeesWindow.xaml.
+
+## TS-21 · 등록 창 종료 시 Close 재진입
+- 발생일/상태: 2026-10-22, 재현 후 수정·진단 통과.
+- 증상/재현: FaceEnrollment --ui-smoke에서 exit -532462766. Windows .NET 이벤트 1026에 InvalidOperationException: 창을 닫는 중 Close를 호출할 수 없음.
+- 원인 근거: WindowClosing의 DisposeAsync가 즉시 끝나면 최초 Closing 이벤트 안에서 다시 Close를 호출했다. 기존 진단의 즉시 Shutdown도 종료와 경합했다.
+- 수정/선택 이유: 세 앱에서 Dispatcher.BeginInvoke로 Close를 다음 이벤트로 예약하고 진단은 Closed에서 Shutdown(0). 자원 해제 순서는 유지.
+- 검증: 등록 설정 창 2회 열기·닫기와 종료 진단 exit 0. 전체 솔루션 최종 빌드 경고·오류 0. 실제 카메라 활성 종료는 추가 현장 확인 필요.
+- 배운 점/관련: await는 항상 비동기 양보를 보장하지 않는다. FaceEnrollment/App.xaml.cs 및 세 앱 MainWindow.xaml.cs.

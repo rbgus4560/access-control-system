@@ -111,3 +111,9 @@ Python 검증 환경은 access_face_ai의 Python 3.11.17, NumPy 1.26.4, OpenCV 4
 - 통합 정리: project-summary.md, troubleshooting.md, refactor-20261021.md
 
 Git 커밋 이력이 아닌 문서와 코드에 기반한 재구성이다. 원문 자료의 관찰·사용자 보고·자동 검사·미확인 사항을 구분해 보존한다.
+
+## 2026-10-22 · 12.4 연결 자동화와 UI
+
+서버의 DB 연결 자격 증명을 직원 창에서 재사용하고, 성공 후 TCP를 시작하도록 연결했다. 사용자가 선택한 경우에만 DPAPI로 시작 설정을 저장한다. 클라이언트는 기존 페어링을 재사용해 시작 시 연결한다. 상태 표시·입력칸·등록 순서와 직원 편집 배치를 개선했다. 등록 UI 종료 검사에서 발견한 Close 재진입을 세 앱의 지연 종료로 보완했다.
+
+[사용법](guides/STARTUP_UI_12_4_KO.md), [검증과 미확인 범위](validation/VALIDATION_STAGE12_4_WINDOWS.md), TS-19~21을 함께 읽는다. 기존 Word 보고서는 10월 21일 정리 시점의 기록이며 이번 변경은 이 문서에 추가했다.

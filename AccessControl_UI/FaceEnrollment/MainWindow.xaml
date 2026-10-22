@@ -4,7 +4,7 @@
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     x:Class="FaceEnrollment.MainWindow"
-    Title="Access Control · 직원 얼굴 등록 12.3 · .NET 10"
+    Title="Access Control · 직원 얼굴 등록 12.4 · .NET 10"
     Width="1400"
     Height="900"
     MinWidth="980"
@@ -28,7 +28,8 @@
                 Click="ShowSettings" />
             <StackPanel>
                 <TextBlock Text="직원 얼굴 등록" FontSize="25" FontWeight="Bold"/>
-                <TextBlock Text="정면에서 시작해 안내에 따라 천천히 움직여 주세요." Style="{StaticResource StudioCaption}" Margin="0,5,0,0"/>
+                <TextBlock Text="직원 선택 → 안내에 따른 얼굴 수집 → DB 저장" Style="{StaticResource StudioCaption}" Margin="0,5,0,0"/>
+                <TextBlock Text="정면에서 시작해 천천히 움직이세요. 등록용 카메라는 인증 앱과 동시에 열지 않습니다." Style="{StaticResource StudioCaption}" Margin="0,6,0,0"/>
             </StackPanel>
         </DockPanel>
         <Grid Grid.Row="1">

@@ -15,3 +15,7 @@
 2026-10-21에 Start_Net10.cmd와 Start_Stage7.cmd, Start_Stage8.cmd, Start_Stage9.cmd, Start_Stage10.cmd를 삭제했다. 다섯 파일은 해시까지 동일한 서버/클라이언트 선택 래퍼였으며 별도 기능은 없었다. 과거 개발·검증 문서에 나오는 해당 이름은 당시 기록으로 남긴다. 현재 실행에는 Start_Server.cmd 또는 Start_Client.cmd를 사용한다.
 
 등록·보관 검사 파일은 삭제하지 않고 scripts/checks로 이동했다. 과거 문서의 루트 파일명 안내 대신 위 현재 위치를 사용한다. Word 보고서는 작성 당시 개발 기록이며 최신 실행 위치는 이 문서와 문서 목차를 기준으로 한다.
+
+## 12.4 시작 설정 검사
+
+AccessControl_UI에서 `dotnet run --project StartupChecks/StartupChecks.csproj`로 합성 데이터의 Windows 사용자 암호화 저장을 검사한다. 실제 Windows 사용자 컨텍스트가 필요하다. 운영 설정을 사용하지 않으며 임시 폴더만 생성·삭제한다. [12.4 사용법](STARTUP_UI_12_4_KO.md)을 참고한다.

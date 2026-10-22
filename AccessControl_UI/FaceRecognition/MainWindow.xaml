@@ -4,7 +4,7 @@
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     x:Class="FaceRecognition.MainWindow"
-    Title="Access Control · 12.3 · 구역 인증 클라이언트 · .NET 10"
+    Title="Access Control · 12.4 · 구역 인증 클라이언트 · .NET 10"
     Width="1360"
     Height="900"
     MinWidth="1040"
@@ -40,6 +40,8 @@
                     <TextBlock Text="연결 상태" Style="{StaticResource StudioHeading}"/>
                     <TextBlock x:Name="CameraConnection" Text="카메라 · 미연결" Margin="0,5" TextWrapping="Wrap"/>
                     <TextBlock x:Name="ServerConnection" Text="서버 · 미연결" Margin="0,5" TextWrapping="Wrap"/>
+                    <TextBlock x:Name="AiConnection" Text="AI · 시작 대기" Margin="0,5" TextWrapping="Wrap"/>
+                    <TextBlock x:Name="GalleryConnection" Text="직원 기준 · 동기화 대기" Margin="0,5" TextWrapping="Wrap"/>
                     <TextBlock Text="최근 인증" Style="{StaticResource StudioHeading}" Margin="0,24,0,8"/>
                     <TextBlock Text="이번 실행의 DB 기록 · 선택 시 상세 창" Style="{StaticResource StudioCaption}" Margin="0,0,0,8"/>
                 </StackPanel>
@@ -97,11 +99,11 @@
                 Padding="20,16"
                 Margin="0,0,0,16">
                 <StackPanel>
-                    <TextBlock Text="서버 최종 판정" Style="{StaticResource StudioCaption}" Margin="0,0,0,6"/>
+                    <TextBlock Text="ACCESS DECISION  /  서버 최종 판정" Style="{StaticResource StudioCaption}" Margin="0,0,0,6"/>
                     <TextBlock
                         x:Name="AccessStatus"
                         Text="출입 판정 대기 · 서버 연결과 카메라를 준비하세요"
-                        FontSize="23"
+                        FontSize="28"
                         FontWeight="SemiBold"
                         TextWrapping="Wrap" />
                 </StackPanel>
@@ -142,6 +144,7 @@
         </Grid>
         <Grid x:Name="AuxiliaryViews" Visibility="Collapsed">
             <StackPanel x:Name="ConnectionControls" Margin="8">
+                <TextBlock Text="최초 한 번 등록하면 다음 실행부터 자동 연결합니다. 카메라는 카메라·AI 탭에서 직접 시작하며, 카메라 시작 시 녹화도 시작됩니다." TextWrapping="Wrap" Margin="0,0,0,16"/>
                 <TextBlock Text="서버에서 복사한 연결 코드"/>
                 <PasswordBox x:Name="PairingCode" Margin="0,8,0,8"/>
                 <ui:Button x:Name="ApplyPair" Content="연결 코드 적용" Click="ApplyPairing" Margin="0,0,0,16"/>

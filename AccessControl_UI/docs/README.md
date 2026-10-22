@@ -1,6 +1,6 @@
 # 문서 목차
 
-현재 실행은 최신 12.3 안내를 우선한다. 단계별 검증과 과거 배포 안내는 해당 버전의 기록이며, 모든 내용이 최신 실행 절차를 뜻하지는 않는다. 실행 명령은 별도 표시가 없으면 AccessControl_UI 프로젝트 루트에서 실행한다.
+현재 연결·화면 사용법은 12.4 안내, 얼굴 식별은 12.3 안내를 우선한다. 단계별 검증과 과거 배포 안내는 해당 버전의 기록이며, 모든 내용이 최신 실행 절차를 뜻하지는 않는다. 실행 명령은 별도 표시가 없으면 AccessControl_UI 프로젝트 루트에서 실행한다.
 
 ## 처음 읽을 문서
 
@@ -13,6 +13,9 @@
 - [GitHub 보관 설정](github.md)
 
 ## 사용과 코드 안내
+
+- [12.4 연결 자동화와 UI](guides/STARTUP_UI_12_4_KO.md)
+- [12.4 검증 결과와 현장 확인](validation/VALIDATION_STAGE12_4_WINDOWS.md)
 
 - [현재 실행·검사 스크립트](guides/COMMANDS.md) — 과거 CMD 이름의 대체 실행 방법 포함
 - [AUTO_IDENTIFICATION_12_3_KO.md — 12.3 전체 직원 자동 식별(1:N)](guides/AUTO_IDENTIFICATION_12_3_KO.md)

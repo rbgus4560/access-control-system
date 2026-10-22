@@ -1,5 +1,5 @@
 // 파일 역할: 관리 서버의 직원 목록·기본 정보·활성 상태·출입 권한 편집 화면입니다.
-// 기능 기준: 12.3 정상 동작 버전. 코드 설명과 서식을 정리한 소스입니다.
+// 기능 기준: 12.4. 서버에서 검증한 접속 설정을 재사용하고 세션 변경 시 작업을 차단합니다.
 
 using System;
 using System.Threading;
@@ -12,15 +12,19 @@ namespace AccessControlServer;
 public partial class EmployeesWindow : Window
 {
     private readonly DatabaseEndpoint endpoint;
+    private string sessionPassword;
+    private readonly Func<bool> sessionIsCurrent;
     private readonly CancellationTokenSource lifetime = new();
     private EmployeeRow? editing;
     private bool busy;
     private bool closing;
 
-    public EmployeesWindow(DatabaseEndpoint endpoint)
+    public EmployeesWindow(DatabaseEndpoint endpoint, string password, Func<bool> sessionIsCurrent)
     {
         InitializeComponent();
         this.endpoint = endpoint;
+        sessionPassword = password;
+        this.sessionIsCurrent = sessionIsCurrent;
         EndpointLabel.Text =
             $"{endpoint.Host}:{endpoint.Port} / {endpoint.Database} / {endpoint.Username}";
         Closed += (_, _) =>
@@ -28,8 +32,9 @@ public partial class EmployeesWindow : Window
             closing = true;
             lifetime.Cancel();
             lifetime.Dispose();
-            PasswordInput.Clear();
+            sessionPassword = "";
         };
+        Loaded += (_, _) => Search(this, new RoutedEventArgs());
     }
 
     private void SetBusy(bool value)
@@ -37,6 +42,7 @@ public partial class EmployeesWindow : Window
         busy = value;
         SearchArea.IsEnabled = !value;
         EditArea.IsEnabled = !value;
+        SaveButton.IsEnabled = !value;
         Employees.IsEnabled = !value;
     }
 
@@ -74,6 +80,11 @@ public partial class EmployeesWindow : Window
     {
         if (busy)
             return;
+        if (!sessionIsCurrent())
+        {
+            StatusLabel.Text = "서버 설정에서 DB를 연결한 뒤 직원 관리를 다시 열어 주세요.";
+            return;
+        }
         SetBusy(true);
         StatusLabel.Text = "직원 목록 조회 중";
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
@@ -82,7 +93,7 @@ public partial class EmployeesWindow : Window
         {
             var rows = await EmployeeService.ListAsync(
                 endpoint,
-                PasswordInput.Password,
+                sessionPassword,
                 SearchInput.Text,
                 cts.Token
             );
@@ -113,6 +124,11 @@ public partial class EmployeesWindow : Window
     {
         if (busy)
             return;
+        if (!sessionIsCurrent())
+        {
+            StatusLabel.Text = "DB 연결이 변경됐습니다. 직원 관리 창을 다시 열어 주세요.";
+            return;
+        }
         if (
             string.IsNullOrWhiteSpace(EmployeeNoInput.Text)
             || string.IsNullOrWhiteSpace(NameInput.Text)
@@ -131,7 +147,7 @@ public partial class EmployeesWindow : Window
         {
             saved = await EmployeeService.SaveAsync(
                 endpoint,
-                PasswordInput.Password,
+                sessionPassword,
                 editing,
                 EmployeeNoInput.Text,
                 NameInput.Text,
@@ -148,7 +164,7 @@ public partial class EmployeesWindow : Window
             SearchInput.Text = "";
             var rows = await EmployeeService.ListAsync(
                 endpoint,
-                PasswordInput.Password,
+                sessionPassword,
                 "",
                 cts.Token
             );

@@ -21,6 +21,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         AiHost.Content = panel;
+        Loaded += (_, _) => AccessControl.Preview.UiPreviewCapture.Queue(this);
         EnrollmentControlsHost.Content = panel.EnrollmentControls;
         panel.StateUpdated += (state, fresh) =>
         {
@@ -169,6 +170,7 @@ public partial class MainWindow : Window
         settingsWindow?.Close();
         await panel.DisposeAsync();
         lifetime.Dispose();
-        Close();
+        // DisposeAsync가 즉시 끝나도 Closing 이벤트가 반환된 뒤 창을 닫아 재진입을 피합니다.
+        _ = Dispatcher.BeginInvoke(new Action(Close));
     }
 }

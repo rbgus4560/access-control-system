@@ -1,5 +1,5 @@
 // 파일 역할: 관리 서버의 DB 연결·TCP 수신·관제 화면을 조정합니다. 클라이언트 관측을 DB 권한 판정과 연결합니다.
-// 기능 기준: 12.3 정상 동작 버전. 코드 설명과 서식을 정리한 소스입니다.
+// 기능 기준: 12.4. 서버 DB 세션 재사용과 선택형 자동 시작 및 관제 상태를 연결합니다.
 
 using System;
 using System.Collections.ObjectModel;
@@ -33,6 +33,11 @@ public partial class MainWindow : Window
     private Task? faceRequests;
     private CancellationTokenSource? request;
     private bool closing;
+    private readonly bool preview = Environment.GetCommandLineArgs().Contains("--ui-preview");
+    private DatabaseEndpoint? connectedEndpoint;
+    private string connectedPassword = "";
+    private bool tcpBusy, tcpManuallyStopped;
+    private readonly ServerSettingsStore startupSettings = new();
     private bool eventPlaybackBusy;
     private readonly MediaCoordinator media;
     private RemoteApiServer? remoteApi;
@@ -53,8 +58,11 @@ public partial class MainWindow : Window
         media = new MediaCoordinator(() => Volatile.Read(ref faceDatabase));
         try
         {
-            serverLink = PairingStore.Server();
-            LinkSecurity.Server = serverLink;
+            if (!preview)
+            {
+                serverLink = PairingStore.Server();
+                LinkSecurity.Server = serverLink;
+            }
         }
         catch (Exception)
         {
@@ -108,10 +116,44 @@ public partial class MainWindow : Window
             RefreshDashboard();
         };
         monitorClock.Start();
-        Loaded += (_, _) =>
+        Loaded += async (_, _) =>
         {
+            if (preview)
+            {
+                Window target = this;
+                if (Environment.GetCommandLineArgs().Contains("--employees-preview"))
+                {
+                    target = new EmployeesWindow(new("서버 설정에서 연결", 5432, "미연결", ""), "", () => false) { Owner = this };
+                    target.Show();
+                }
+                else if (Environment.GetCommandLineArgs().Contains("--settings-preview"))
+                {
+                    ShowServerSettings(this, new RoutedEventArgs());
+                    target = settingsWindow!;
+                }
+                AccessControl.Preview.UiPreviewCapture.Queue(target);
+                return;
+            }
             faceRequests = FaceApiServer.ListenAsync(HandleFaceRequestAsync, lifetime.Token);
             _ = ObserveFaceRequestsAsync();
+            try
+            {
+                if (startupSettings.Load() is { } saved)
+                {
+                    HostInput.Text = saved.Endpoint.Host;
+                    PortInput.Text = saved.Endpoint.Port.ToString();
+                    DatabaseInput.Text = saved.Endpoint.Database;
+                    UsernameInput.Text = saved.Endpoint.Username;
+                    PasswordInput.Password = saved.Password;
+                    TcpPort.Text = saved.TcpPort.ToString();
+                    RememberConnection.IsChecked = true;
+                    await ConnectDatabaseAsync();
+                }
+            }
+            catch (Exception)
+            {
+                DbStatus.Text = "저장 설정 복원 실패 · 서버 설정에서 다시 연결하세요.";
+            }
         };
     }
 
@@ -232,12 +274,21 @@ public partial class MainWindow : Window
 
     private async void StartTcp(object sender, RoutedEventArgs e)
     {
+        tcpManuallyStopped = false;
+        await StartTcpAsync();
+    }
+
+    private async Task StartTcpAsync()
+    {
+        if (closing || monitor.Running || tcpBusy) return;
         if (!int.TryParse(TcpPort.Text, out int port))
         {
             MessageBox.Show("TCP 포트를 확인해 주세요.");
             return;
         }
 
+        tcpBusy = true;
+        TcpStart.IsEnabled = false;
         try
         {
             if (port is < 1024 or > 65533 || serverLink is null)
@@ -261,14 +312,19 @@ public partial class MainWindow : Window
 
             await videoServer.StopAsync();
             await monitor.StopAsync();
-            MessageBox.Show(
-                "서버 시작 실패 · 1024~65533 기본 포트와 다음 두 포트가 비어 있어야 합니다. 기본: 5050 / 5051 / 5052"
-            );
+            if (!closing) TcpStatus.Text = "서버 시작 실패 · 포트 5050~5052 또는 설정한 세 포트의 점유 상태를 확인하세요.";
+        }
+        finally
+        {
+            tcpBusy = false;
+            if (!closing) TcpStart.IsEnabled = !monitor.Running;
         }
     }
 
     private async void StopTcp(object sender, RoutedEventArgs e)
     {
+        tcpManuallyStopped = true;
+        if (tcpBusy) return;
         TcpStop.IsEnabled = false;
         if (remoteApi is not null)
         {
@@ -280,6 +336,7 @@ public partial class MainWindow : Window
         await monitor.StopAsync();
         RefreshVideo();
         TcpStart.IsEnabled = TcpPort.IsEnabled = true;
+        TcpStatus.Text = "수동 중지 · TCP 서버 시작을 눌러 다시 연결하세요.";
     }
 
     private static string StatusName(string status) =>
@@ -461,12 +518,17 @@ public partial class MainWindow : Window
 
         serverLink?.Certificate.Dispose();
         enrollmentProcess?.Dispose();
+        connectedPassword = "";
+        connectedEndpoint = null;
         Volatile.Write(ref faceDatabase, null);
         lifetime.Dispose();
-        Close();
+        // DisposeAsync가 즉시 끝나도 Closing 이벤트가 반환된 뒤 창을 닫아 재진입을 피합니다.
+        _ = Dispatcher.BeginInvoke(new Action(Close));
     }
 
-    private async void LoadDatabase(object sender, RoutedEventArgs e)
+    private async void LoadDatabase(object sender, RoutedEventArgs e) => await ConnectDatabaseAsync();
+
+    private async Task ConnectDatabaseAsync()
     {
         if (request != null)
             return;
@@ -483,6 +545,14 @@ public partial class MainWindow : Window
             return;
         }
 
+        // 입력값을 한 번에 고정하고 기존 직원 창을 닫아 다른 DB의 오래된 편집을 차단합니다.
+        var endpoint = new DatabaseEndpoint(HostInput.Text.Trim(), port, DatabaseInput.Text.Trim(), UsernameInput.Text.Trim());
+        string password = PasswordInput.Password;
+        if (string.IsNullOrEmpty(password) && endpoint == connectedEndpoint)
+            password = connectedPassword;
+        employeesWindow?.Close();
+        connectedEndpoint = null;
+        connectedPassword = "";
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
         cts.CancelAfter(TimeSpan.FromSeconds(20));
         request = cts;
@@ -506,7 +576,7 @@ public partial class MainWindow : Window
                 port,
                 DatabaseInput.Text.Trim(),
                 UsernameInput.Text.Trim(),
-                PasswordInput.Password,
+                password,
                 cts.Token
             );
             var db = new FaceDatabase(
@@ -516,13 +586,15 @@ public partial class MainWindow : Window
                     DatabaseInput.Text.Trim(),
                     UsernameInput.Text.Trim()
                 ),
-                PasswordInput.Password
+                password
             );
             var admins = await db.AdminsAsync(cts.Token);
             var history = await db.EventsAsync(cts.Token);
             if (closing || cts.IsCancellationRequested)
                 return;
             Volatile.Write(ref faceDatabase, db);
+            connectedEndpoint = endpoint;
+            connectedPassword = password;
             rows.Clear();
             foreach (var row in history)
                 rows.Add(row);
@@ -532,12 +604,26 @@ public partial class MainWindow : Window
             FaceDbStatus.Text =
                 admins.Count == 0
                     ? "얼굴 저장 전 관리자 추가를 한 번 진행해 주세요."
-                    : "직원·얼굴 요청 대기 중 · DB 연결 정보는 이 서버의 메모리에만 보관";
+                    : "직원·얼굴 요청 대기 중 · 서버 세션 사용 · 자동 연결 저장은 선택 설정에 따름";
             Clients.ItemsSource = snapshot.Clients;
             Cameras.ItemsSource = snapshot.Cameras;
             DeviceCount.Text =
                 $"클라이언트 {snapshot.Clients.Count}개 / 카메라 {snapshot.Cameras.Count}개";
             DbStatus.Text = $"조회 성공 · {snapshot.Database} · {DateTime.Now:HH:mm:ss}";
+            try
+            {
+                if (RememberConnection.IsChecked == true)
+                {
+                    int startupPort = int.TryParse(TcpPort.Text, out int configured) && configured is >= 1024 and <= 65533 ? configured : 5050;
+                    startupSettings.Save(new(endpoint, password, startupPort));
+                }
+                else startupSettings.Forget();
+            }
+            catch (Exception)
+            {
+                DbStatus.Text += " · 자동 연결 설정 저장 실패";
+            }
+            if (!tcpManuallyStopped) await StartTcpAsync();
         }
         catch (OperationCanceledException)
         {
@@ -611,22 +697,17 @@ public partial class MainWindow : Window
             RequestId = request.RequestId,
             Success = true,
             Message =
-                "서버의 직원·권한 관리 창을 열었습니다. 해당 창에서 DB 비밀번호 입력 후 조회·수정하세요."
+                "서버의 직원·권한 관리 창을 열었습니다. 연결된 DB로 조회·수정할 수 있습니다."
         };
     }
 
     private void ShowEmployees(object sender, RoutedEventArgs e)
     {
-        if (
-            !int.TryParse(PortInput.Text, out int port)
-            || port < 1
-            || port > 65535
-            || string.IsNullOrWhiteSpace(HostInput.Text)
-            || string.IsNullOrWhiteSpace(DatabaseInput.Text)
-            || string.IsNullOrWhiteSpace(UsernameInput.Text)
-        )
+        var session = Volatile.Read(ref faceDatabase);
+        if (session is null || connectedEndpoint is null)
         {
-            MessageBox.Show("DB 접속 정보를 확인해 주세요.");
+            MessageBox.Show("서버 설정에서 DB를 연결해 주세요.");
+            ShowServerSettings(sender, e);
             return;
         }
 
@@ -639,12 +720,9 @@ public partial class MainWindow : Window
         }
 
         employeesWindow = new EmployeesWindow(
-            new DatabaseEndpoint(
-                HostInput.Text.Trim(),
-                port,
-                DatabaseInput.Text.Trim(),
-                UsernameInput.Text.Trim()
-            )
+            connectedEndpoint,
+            connectedPassword,
+            () => !closing && ReferenceEquals(session, Volatile.Read(ref faceDatabase))
         )
         {
             Owner = this
@@ -658,6 +736,9 @@ public partial class MainWindow : Window
 
     private void ClearDatabase(object sender, RoutedEventArgs e)
     {
+        employeesWindow?.Close();
+        connectedEndpoint = null;
+        connectedPassword = "";
         rows.Clear();
         HistoryStatus.Text = "DB 조회 전";
         current = null;
@@ -671,6 +752,19 @@ public partial class MainWindow : Window
         Cameras.ItemsSource = null;
         DeviceCount.Text = "조회 전";
         DbStatus.Text = "PostgreSQL · 표시 초기화";
+    }
+
+    private void ForgetStartupSettings(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            startupSettings.Forget();
+            DbStatus.Text = "저장된 자동 DB 연결 설정 삭제 · 현재 연결은 유지됩니다.";
+        }
+        catch (Exception)
+        {
+            DbStatus.Text = "자동 연결 설정 삭제 실패 · 파일 접근 권한을 확인하세요.";
+        }
     }
 
     private void ShowDetail(object s, RoutedEventArgs e)
@@ -733,6 +827,12 @@ public partial class MainWindow : Window
             + (monitor.Running ? "TCP 수신 중" : "TCP 중지")
             + "  ·  "
             + (media.Connected ? "영상·클립 요청 채널 연결됨" : "영상·클립 요청 채널 대기");
+        DbIndicator.Text = faceDatabase is null ? "DB · 연결 필요" : "DB · 사용 준비";
+        DbIndicator.Foreground = faceDatabase is null ? System.Windows.Media.Brushes.SlateGray : System.Windows.Media.Brushes.SeaGreen;
+        TcpIndicator.Text = monitor.Running ? $"TCP · 수신 중 :{monitor.BoundPort}" : "TCP · 중지";
+        TcpIndicator.Foreground = monitor.Running ? System.Windows.Media.Brushes.SeaGreen : System.Windows.Media.Brushes.SlateGray;
+        bool videoFresh = displayedVideo is not null && Stopwatch.GetElapsedTime(displayedVideo.At) < TimeSpan.FromSeconds(3);
+        StreamIndicator.Text = videoFresh ? "영상 · 수신 중" : "영상 · 대기";
     }
 
     private void ShowMonitoring(object sender, RoutedEventArgs e) => RefreshDashboard();

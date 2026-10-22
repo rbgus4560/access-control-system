@@ -9,6 +9,7 @@
     <ItemGroup>
         <Compile Include="../Ui/*.cs" Link="Ui/%(Filename)%(Extension)"/>
         <Compile Include="../Shared/PairingStore.cs" Link="Shared/PairingStore.cs"/>
+        <Compile Include="../Shared/UiPreviewCapture.cs" Link="Shared/UiPreviewCapture.cs"/>
         <PackageReference Include="WPF-UI" Version="4.3.0"/>
         <PackageReference Include="Npgsql" Version="8.0.9"/>
         <Compile Include="../Network/*.cs" Link="Network/%(Filename)%(Extension)"/>

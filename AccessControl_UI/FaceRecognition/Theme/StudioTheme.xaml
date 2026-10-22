@@ -197,4 +197,22 @@
             </Setter.Value>
         </Setter>
     </Style>
+    <!-- 같은 입력 높이와 여백을 사용해 설정과 직원 편집 화면의 시각적 기준을 맞춥니다. -->
+    <Style TargetType="TextBox">
+        <Setter Property="MinHeight" Value="34"/>
+        <Setter Property="Padding" Value="9,6"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="BorderBrush" Value="{StaticResource StudioLine}"/>
+        <Setter Property="Background" Value="White"/>
+    </Style>
+    <Style TargetType="PasswordBox">
+        <Setter Property="MinHeight" Value="34"/>
+        <Setter Property="Padding" Value="9,6"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="BorderBrush" Value="{StaticResource StudioLine}"/>
+    </Style>
+    <Style TargetType="ComboBox">
+        <Setter Property="MinHeight" Value="34"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
 </ResourceDictionary>

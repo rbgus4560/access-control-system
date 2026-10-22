@@ -22,8 +22,8 @@ public partial class App : Application
             {
                 // Constructs real WPF controls and exercises ownership on Windows, without starting a camera or AI.
                 window.VerifySettingsReopen();
+                window.Closed += (_, _) => Shutdown(0);
                 window.Close();
-                Shutdown(0);
             }
             else
                 ShutdownMode = ShutdownMode.OnMainWindowClose;

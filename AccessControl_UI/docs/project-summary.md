@@ -135,3 +135,7 @@ Windows 최신 정리본 UI·카메라·DPAPI·LAN 통합, 조명·각도별 정
 필요한 사용자 정보: 개발 기간, 개인/팀 여부와 담당 범위, 기술을 선택한 실제 이유, 가장 어려웠던 문제와 직접 시도한 해결 과정, 최신 버전의 현장 시연 결과. 저장소 URL과 공개 여부는 미확인이다. 대상 폴더 자체의 .git은 없었으며 Git 명령은 환경 오류로 성공하지 않아 상위 저장소·원격 연결 여부는 확정하지 않았다.
 
 관련 문서: [전체 트러블슈팅](troubleshooting.md), [기존 코드 안내](guides/CODE_GUIDE_KO.md), [12.3 코드 정리·검증](history/REFACTOR_12_3_KO.md), [시점별 사용자 확인](history/VERIFIED_PROGRESS.md).
+
+## 2026-10-22 최신 변경 · 12.4
+
+DB 세션 재사용·선택형 암호화 자동 연결·TCP 자동 시작·저장된 페어링 자동 연결과 UI를 개선했다. [현재 시작 안내](guides/STARTUP_UI_12_4_KO.md)와 [이번 검증 및 현장 확인 항목](validation/VALIDATION_STAGE12_4_WINDOWS.md)을 우선한다. 얼굴 식별은 기존 12.3 흐름을 유지한다.

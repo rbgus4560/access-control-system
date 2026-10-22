@@ -4,7 +4,7 @@
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     x:Class="AccessControlServer.MainWindow"
-    Title="Access Control · 12.3 · 서버 관제 · .NET 10"
+    Title="Access Control · 12.4 · 서버 관제 · .NET 10"
     Closing="WindowClosing"
     Width="1440"
     Height="940"
@@ -86,7 +86,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition/>
-                <RowDefinition Height="210"/>
+                <RowDefinition Height="180"/>
             </Grid.RowDefinitions>
             <Grid Margin="0,0,0,18">
                 <Grid.ColumnDefinitions>
@@ -100,6 +100,17 @@
                         Text="서버 설정에서 DB와 수신 연결을 준비하세요."
                         Style="{StaticResource StudioCaption}"
                         Margin="0,6,0,0" />
+                    <WrapPanel Margin="0,14,0,0">
+                        <Border Background="White" BorderBrush="{StaticResource StudioLine}" BorderThickness="1" CornerRadius="8" Padding="12,8" Margin="0,0,8,0">
+                            <TextBlock x:Name="DbIndicator" Text="DB · 연결 필요" FontWeight="SemiBold"/>
+                        </Border>
+                        <Border Background="White" BorderBrush="{StaticResource StudioLine}" BorderThickness="1" CornerRadius="8" Padding="12,8" Margin="0,0,8,0">
+                            <TextBlock x:Name="TcpIndicator" Text="TCP · 수신 대기" FontWeight="SemiBold"/>
+                        </Border>
+                        <Border Background="White" BorderBrush="{StaticResource StudioLine}" BorderThickness="1" CornerRadius="8" Padding="12,8">
+                            <TextBlock x:Name="StreamIndicator" Text="영상 · 미연결" FontWeight="SemiBold"/>
+                        </Border>
+                    </WrapPanel>
                 </StackPanel>
                 <TextBlock
                     x:Name="ServerClock"
@@ -111,7 +122,7 @@
             <Grid Grid.Row="1" Margin="0,0,0,16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition/>
-                    <ColumnDefinition Width="300"/>
+                    <ColumnDefinition Width="280"/>
                 </Grid.ColumnDefinitions>
                 <Border Background="#142033" CornerRadius="12" ClipToBounds="True" Margin="0,0,16,0">
                     <Grid>
@@ -119,7 +130,7 @@
                         <StackPanel x:Name="VideoHint" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <ui:SymbolIcon Symbol="Video24" FontSize="42" Foreground="#8DABC9" HorizontalAlignment="Center"/>
                             <TextBlock Text="카메라 영상 수신 대기" Foreground="#DCE5F3" FontSize="20" Margin="0,14,0,8"/>
-                            <TextBlock Text="클라이언트 연결 후 영상이 표시됩니다." Foreground="#9DAFCA" TextAlignment="Center"/>
+                            <TextBlock Text="① DB 연결  →  ② 클라이언트 연결  →  ③ 카메라 시작" Foreground="#9DAFCA" TextAlignment="Center" TextWrapping="Wrap"/>
                         </StackPanel>
                         <Border Background="#D0142033" VerticalAlignment="Top" Padding="16,12">
                             <TextBlock x:Name="VideoStatus" Text="CAM-01 · 영상 수신 대기" Foreground="White" TextWrapping="Wrap"/>
@@ -200,7 +211,7 @@
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="20">
                             <TextBlock Text="DB 연결 및 관리자" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                            <TextBlock Text="이 서버 PC의 PostgreSQL에 연결합니다." Style="{StaticResource StudioCaption}" Margin="0,0,0,20"/>
+                            <TextBlock Text="DB에 한 번 연결하면 직원 관리·출입 기록·영상 조회에서 함께 사용합니다. 연결 성공 후 TCP 수신을 자동 시작합니다." Style="{StaticResource StudioCaption}" Margin="0,0,0,20"/>
                             <WrapPanel x:Name="ConnectionFields" VerticalAlignment="Center">
                                 <StackPanel Margin="0,0,12,6">
                                     <TextBlock Text="호스트" Style="{StaticResource StudioCaption}" Margin="0,0,0,4"/>
@@ -230,9 +241,12 @@
                                     Appearance="Primary"
                                     Click="LoadDatabase"
                                     Margin="0,0,8,0" />
-                                <ui:Button Content="표시 초기화" Appearance="Secondary" Click="ClearDatabase" Margin="0,0,12,0"/>
+                                <ui:Button Content="DB 연결 해제" Appearance="Secondary" Click="ClearDatabase" Margin="0,0,12,0"/>
                                 <TextBlock x:Name="DbStatus" Text="PostgreSQL · 미확인" VerticalAlignment="Center" TextWrapping="Wrap"/>
                             </WrapPanel>
+                            <CheckBox x:Name="RememberConnection"
+                                Content="이 Windows 계정에 암호화 저장하고 다음 실행 시 DB 자동 연결"
+                                Unchecked="ForgetStartupSettings" Margin="0,4,0,16"/>
                             <WrapPanel Margin="0,0,0,10">
                                 <TextBlock Text="얼굴 등록 관리자" VerticalAlignment="Center" Margin="0,0,10,0"/>
                                 <ComboBox x:Name="FaceAdmins" Width="240" SelectionChanged="SelectAdmin" VerticalContentAlignment="Center"/>

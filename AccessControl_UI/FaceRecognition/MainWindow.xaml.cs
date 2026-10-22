@@ -1,5 +1,5 @@
 // 파일 역할: 인증 클라이언트의 화면과 통신 상태를 연결합니다. 식별된 직원 정보는 서버에 전달하고 최종 허가·거부 응답을 표시합니다.
-// 기능 기준: 12.3 정상 동작 버전. 코드 설명과 서식을 정리한 소스입니다.
+// 기능 기준: 12.4. 저장된 장치 등록으로 자동 연결하며 수동 중지와 판정 보류를 유지합니다.
 
 using System.IO;
 using System.ComponentModel;
@@ -30,6 +30,8 @@ public partial class MainWindow : Window
     private readonly CancellationTokenSource lifetime = new();
     private readonly DispatcherTimer clock = new() { Interval = TimeSpan.FromSeconds(1) };
     private bool closing;
+    private readonly bool preview = Environment.GetCommandLineArgs().Contains("--ui-preview");
+    private bool connectionBusy;
     private readonly GallerySynchronizer gallerySync;
     private FaceGallerySnapshot? gallery;
     private bool galleryReady;
@@ -92,7 +94,7 @@ public partial class MainWindow : Window
                     }
                 })
             );
-        mediaAgent.Start();
+        if (!preview) mediaAgent.Start();
         panel.LiveFrameUpdated += frame =>
         {
             if (frame is null)
@@ -132,7 +134,7 @@ public partial class MainWindow : Window
                         RetentionStatus.Text = text;
                 })
             );
-        recordingSync.Start();
+        if (!preview) recordingSync.Start();
         gallerySync.Invalidated += text =>
             Dispatcher.BeginInvoke(
                 new Action(() =>
@@ -168,7 +170,7 @@ public partial class MainWindow : Window
                     await panel.ImportGalleryAsync(value);
                 })
             );
-        gallerySync.Start();
+        if (!preview) gallerySync.Start();
         panel.StateUpdated += (state, fresh) =>
         {
             bool ready =
@@ -259,6 +261,24 @@ public partial class MainWindow : Window
         };
         clock.Start();
         Clock.Text = DateTime.Now.ToString("yyyy.MM.dd  HH:mm:ss");
+        Loaded += async (_, _) =>
+        {
+            if (preview)
+            {
+                Window target = this;
+                if (Environment.GetCommandLineArgs().Contains("--settings-preview"))
+                {
+                    ShowSettings(this, new RoutedEventArgs());
+                    target = settingsWindow!;
+                }
+                AccessControl.Preview.UiPreviewCapture.Queue(target);
+                return;
+            }
+            if (LinkSecurity.Client is not null)
+                await ConnectServerAsync();
+            else
+                TcpStatus.Text = "최초 연결이 필요합니다 · 설정에서 서버 연결 코드를 등록하세요.";
+        };
     }
 
     private void RememberDecision(AccessDecision? decision)
@@ -290,6 +310,8 @@ public partial class MainWindow : Window
 
     private void RefreshChrome()
     {
+        AiConnection.Text = panel.IsRunning ? "AI · 실행 중" : "AI · 시작 대기";
+        GalleryConnection.Text = galleryReady ? $"직원 기준 · {gallery?.People.Count ?? 0}명 적용" : "직원 기준 · 동기화 대기";
         bool cameraFresh =
             latestCameraAt != 0 && Stopwatch.GetElapsedTime(latestCameraAt).TotalSeconds < 3;
         CameraConnection.Text =
@@ -428,7 +450,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void ApplyPairing(object sender, RoutedEventArgs e)
+    private async void ApplyPairing(object sender, RoutedEventArgs e)
     {
         if (monitor.Running)
         {
@@ -451,6 +473,7 @@ public partial class MainWindow : Window
             observations.Update(new AiState(), false, 0);
             RefreshAccessDisplay();
             TcpStatus.Text = "연결 코드 저장 완료 · 서버 연결 후 직원 기준 자동 동기화";
+            await ConnectServerAsync();
         }
         catch (Exception)
         {
@@ -458,8 +481,12 @@ public partial class MainWindow : Window
         }
     }
 
-    private void ConnectServer(object sender, RoutedEventArgs e)
+    private async void ConnectServer(object sender, RoutedEventArgs e) => await ConnectServerAsync();
+
+    private async Task ConnectServerAsync()
     {
+        if (closing || monitor.Running || connectionBusy) return;
+        connectionBusy = true;
         try
         {
             var profile =
@@ -476,8 +503,16 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show(ex.Message, "서버 연결");
+            await videoClient.StopAsync();
+            await monitor.StopAsync();
+            if (!closing)
+            {
+                TcpStatus.Text = "서버 연결 실패 · " + ex.Message;
+                TcpConnect.IsEnabled = ApplyPair.IsEnabled = PairingCode.IsEnabled = true;
+                TcpDisconnect.IsEnabled = false;
+            }
         }
+        finally { connectionBusy = false; }
     }
 
     private async void DisconnectServer(object sender, RoutedEventArgs e)
@@ -490,6 +525,7 @@ public partial class MainWindow : Window
         await monitor.StopAsync();
         lastDecision = null;
         TcpConnect.IsEnabled = ApplyPair.IsEnabled = PairingCode.IsEnabled = true;
+        TcpStatus.Text = "수동 연결 종료 · 서버 연결을 누르면 재개합니다. 카메라·녹화 상태는 별도입니다.";
         RefreshAccessDisplay();
     }
 
@@ -512,6 +548,7 @@ public partial class MainWindow : Window
         await panel.DisposeAsync();
         await recordingSync.DisposeAsync();
         lifetime.Dispose();
-        Close();
+        // DisposeAsync가 즉시 끝나도 Closing 이벤트가 반환된 뒤 창을 닫아 재진입을 피합니다.
+        _ = Dispatcher.BeginInvoke(new Action(Close));
     }
 }
