@@ -62,3 +62,5 @@
 - [VERIFIED_PROGRESS.md — 12.3 전체 직원 자동 식별(1:N)](history/VERIFIED_PROGRESS.md)
 
 - [아래 방향 등록 정체 개선과 적용 방법](fixes/GUIDED_DOWN_20261022_KO.md)
+
+- [등록 방향 애니메이션 시험 적용과 끄는 방법](guides/ENROLLMENT_ANIMATION_KO.md)

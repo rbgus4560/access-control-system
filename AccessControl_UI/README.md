@@ -26,3 +26,5 @@
 DB 세션 재사용·선택형 암호화 자동 연결·TCP 자동 시작·저장된 페어링 자동 연결과 UI를 개선했다. [현재 시작 안내](docs/guides/STARTUP_UI_12_4_KO.md)와 [이번 검증 및 현장 확인 항목](docs/validation/VALIDATION_STAGE12_4_WINDOWS.md)을 우선한다. 얼굴 식별은 기존 12.3 흐름을 유지한다.
 
 [아래 방향 등록 정체 개선 및 재시험](docs/fixes/GUIDED_DOWN_20261022_KO.md): 앱 재시작 후 새 안내에 따라 실제 카메라 확인 필요.
+
+[등록 방향 안내 애니메이션](docs/guides/ENROLLMENT_ANIMATION_KO.md)은 시험 적용이다. 불편하면 등록 화면의 ‘움직이는 방향 안내’를 해제한다.

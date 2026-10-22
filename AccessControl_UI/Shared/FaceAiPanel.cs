@@ -78,6 +78,8 @@ public sealed class FaceAiPanel : UserControl, IAsyncDisposable
 
     private readonly Dictionary<string, TextBlock> stages = new();
     private readonly TextBlock livePose = Text("현재 감지 방향: 대기");
+    private readonly EnrollmentMotionGuide motionGuide = new();
+    private readonly CheckBox animateGuide = new() { Content = "움직이는 방향 안내", IsChecked = true, Margin = new Thickness(5, 8, 5, 8) };
 
     public FaceAiPanel(string role)
     {
@@ -251,7 +253,7 @@ public sealed class FaceAiPanel : UserControl, IAsyncDisposable
             coverageHint.FontSize = 20;
             coverageHint.FontWeight = FontWeights.SemiBold;
             var guideText = new StackPanel();
-            var caption = Text("LIVE CAMERA");
+            var caption = Text("LIVE CAMERA · 원본 영상 · 화면 기준 안내");
             caption.Foreground = Brushes.LightSteelBlue;
             caption.FontSize = 11;
             caption.Margin = new Thickness(3, 0, 3, 7);
@@ -261,8 +263,14 @@ public sealed class FaceAiPanel : UserControl, IAsyncDisposable
             {
                 Background = new SolidColorBrush(Color.FromRgb(20, 32, 51)),
                 Padding = new Thickness(18, 14, 18, 10),
-                Child = guideText
+                Child = new DockPanel()
             };
+            var animatedHeader = (DockPanel)guideHeader.Child;
+            DockPanel.SetDock(motionGuide, Dock.Left);
+            animatedHeader.Children.Add(motionGuide);
+            animatedHeader.Children.Add(guideText);
+            animateGuide.Unchecked += (_, _) => motionGuide.ShowStage(null);
+            EnrollmentControls.Children.Add(animateGuide);
             viewport.Children.Add(guideHeader);
             root.Children.Add(viewport);
             var cameraButtons = new WrapPanel();
@@ -293,6 +301,13 @@ public sealed class FaceAiPanel : UserControl, IAsyncDisposable
         timer.Tick += (_, _) => Refresh();
         timer.Start();
         SetConnected(false);
+        // 운영 입력을 만들지 않고 등록 안내의 배치만 확인하는 개발용 미리보기입니다.
+        if (role == "enrollment" && Environment.GetCommandLineArgs().Contains("--ui-preview")
+            && Environment.GetCommandLineArgs().Contains("--guide-preview"))
+        {
+            motionGuide.ShowStage("LEFT");
+            coverageHint.Text = "화면 왼쪽으로 천천히 돌려 주세요.";
+        }
     }
 
     private static TextBlock Text(string value) =>
@@ -417,6 +432,7 @@ public sealed class FaceAiPanel : UserControl, IAsyncDisposable
 
     public async Task StopAsync()
     {
+        motionGuide.ShowStage(null);
         try
         {
             galleryStop?.Cancel();
@@ -810,6 +826,9 @@ public sealed class FaceAiPanel : UserControl, IAsyncDisposable
                 : state.ReferenceCount == 9 ? 100
                 : 0;
             livePose.Text = "현재 감지 방향: " + (fresh ? PoseName(state.Pose) : "분석 대기");
+            livePose.Text += " · 방향은 화면 속 얼굴 기준";
+            motionGuide.ShowStage(fresh && state.Enrolling && state.Reason == "OK"
+                && animateGuide.IsChecked == true ? state.Expected : null);
             bool returning = state.Enrolling && state.Expected == "FRONT" && state.PendingCount > 0;
             string guide = state.Expected switch
             {
@@ -831,6 +850,7 @@ public sealed class FaceAiPanel : UserControl, IAsyncDisposable
             if (fresh && state.Enrolling && state.GuidedEnrollment && state.Reason == "OK"
                 && !string.IsNullOrWhiteSpace(state.EnrollmentHint))
                 coverageHint.Text = state.EnrollmentHint;
+            coverageHint.Text = coverageHint.Text.Replace("왼쪽", "화면 왼쪽").Replace("오른쪽", "화면 오른쪽");
             foreach (var (key, row) in stages)
             {
                 int required =
@@ -849,6 +869,7 @@ public sealed class FaceAiPanel : UserControl, IAsyncDisposable
                         : "○  "
                     )
                     + PoseName(key)
+                    + (key is "LEFT" or "RIGHT" ? " (화면 기준)" : "")
                     + (fresh ? $"  {count}/{required}" : "  확인 대기")
                     + (returning && key == "FRONT" ? " · 복귀" : "");
                 row.Foreground =
@@ -989,6 +1010,7 @@ public sealed class FaceAiPanel : UserControl, IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        motionGuide.ShowStage(null);
         disposed = true;
         try
         {

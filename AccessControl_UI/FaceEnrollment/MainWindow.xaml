@@ -76,7 +76,7 @@
                             <Separator/>
                             <TextBlock Text="2  연속 얼굴 등록" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
                             <TextBlock
-                                Text="좌우는 사용자 본인 기준입니다. 방향이 반대로 감지되면 설정에서 반전 보정을 확인하세요."
+                                Text="영상은 좌우 반전하지 않습니다. 화면 속 얼굴이 안내 방향을 향하도록 움직여 주세요. 애니메이션은 아래 선택란에서 끌 수 있습니다."
                                 Style="{StaticResource StudioCaption}"
                                 TextWrapping="Wrap"
                                 Margin="0,0,0,8" />
