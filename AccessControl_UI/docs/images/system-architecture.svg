@@ -1,0 +1,176 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="1510" viewBox="0 0 2400 1510">
+<rect width="100%" height="100%" fill="white"/>
+<text x="65" y="81" fill="#172d49" font-family="Malgun Gothic, sans-serif" font-size="47" font-weight="700">얼굴 등록에서 출입 판정까지</text>
+<text x="67" y="128" fill="#64778b" font-family="Malgun Gothic, sans-serif" font-size="26" font-weight="400">전체 시스템 아키텍처 · 카메라 / 앱 / AI / DB의 실제 사용 흐름</text>
+<rect x="55" y="170" width="1110" height="1220" rx="25" fill="#f4f7fc" stroke="#c4d4e9" stroke-width="2"/>
+<rect x="1410" y="170" width="935" height="1220" rx="25" fill="#f3f9f6" stroke="#bed9cf" stroke-width="2"/>
+<text x="92" y="229" fill="#3668a8" font-family="Malgun Gothic, sans-serif" font-size="34" font-weight="700">관리 서버 PC</text>
+<text x="1448" y="229" fill="#27806a" font-family="Malgun Gothic, sans-serif" font-size="34" font-weight="700">카메라 클라이언트 PC</text>
+<text x="95" y="268" fill="#6b7f98" font-family="Malgun Gothic, sans-serif" font-size="23" font-weight="400">등록 · 권한 판정 · 기록 조회</text>
+<text x="1448" y="268" fill="#6b7f98" font-family="Malgun Gothic, sans-serif" font-size="23" font-weight="400">카메라 입력 · 직원 식별 · 영상 전송</text>
+<rect x="90.0" y="310" width="260.0" height="217" rx="18" fill="white" stroke="#d8e3ef" stroke-width="2"/>
+<rect x="160" y="352" width="120" height="70" rx="12" fill="white" stroke="#3668a8" stroke-width="4"/>
+<ellipse cx="220.0" cy="386.0" rx="23.0" ry="23.0" fill="#edf4fd" stroke="#3668a8" stroke-width="4"/>
+<polyline points="197,424 197,436 243,436" stroke="#3668a8" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="142.5" y="480" fill="#3668a8" font-family="Malgun Gothic, sans-serif" font-size="29" font-weight="700">등록 카메라</text>
+<text x="146.0" y="515" fill="#61758a" font-family="Malgun Gothic, sans-serif" font-size="22" font-weight="400">직원 얼굴 촬영</text>
+<rect x="415.0" y="310" width="290.0" height="217" rx="18" fill="white" stroke="#d8e3ef" stroke-width="2"/>
+<rect x="494" y="345" width="132" height="81" rx="10" fill="white" stroke="#3668a8" stroke-width="4"/>
+<polyline points="495,369 625,369" stroke="#3668a8" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="512.0" cy="358.0" rx="3.0" ry="3.0" fill="#3668a8" stroke="#3668a8" stroke-width="1"/>
+<ellipse cx="527.0" cy="358.0" rx="3.0" ry="3.0" fill="#3668a8" stroke="#3668a8" stroke-width="1"/>
+<ellipse cx="542.0" cy="358.0" rx="3.0" ry="3.0" fill="#3668a8" stroke="#3668a8" stroke-width="1"/>
+<ellipse cx="560.0" cy="393.5" rx="14.0" ry="12.5" fill="#edf4fd" stroke="#3668a8" stroke-width="3"/>
+<polyline points="530,417 540,407 580,407 590,417" stroke="#3668a8" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="477.5" y="480" fill="#3668a8" font-family="Malgun Gothic, sans-serif" font-size="29" font-weight="700">얼굴 등록 앱</text>
+<text x="453.5" y="515" fill="#61758a" font-family="Malgun Gothic, sans-serif" font-size="22" font-weight="400">직원 선택 · 수집 안내</text>
+<rect x="795.0" y="310" width="310.0" height="217" rx="18" fill="white" stroke="#d8e3ef" stroke-width="2"/>
+<rect x="912" y="350" width="76" height="76" rx="10" fill="#edf4fd" stroke="#3668a8" stroke-width="4"/>
+<polyline points="912,366 897,366" stroke="#3668a8" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="928,350 928,335" stroke="#3668a8" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="988,366 1003,366" stroke="#3668a8" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="928,426 928,441" stroke="#3668a8" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="912,388 897,388" stroke="#3668a8" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="950,350 950,335" stroke="#3668a8" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="988,388 1003,388" stroke="#3668a8" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="950,426 950,441" stroke="#3668a8" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="912,410 897,410" stroke="#3668a8" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="972,350 972,335" stroke="#3668a8" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="988,410 1003,410" stroke="#3668a8" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="972,426 972,441" stroke="#3668a8" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="935.0" y="396" fill="#3668a8" font-family="Malgun Gothic, sans-serif" font-size="30" font-weight="700">AI</text>
+<text x="901.5" y="480" fill="#3668a8" font-family="Malgun Gothic, sans-serif" font-size="29" font-weight="700">등록 AI</text>
+<text x="837.0" y="515" fill="#61758a" font-family="Malgun Gothic, sans-serif" font-size="22" font-weight="400">검출 · 특징 · 샘플 선택</text>
+<path d="M 350 415 L 415 415" stroke="#3668a8" stroke-width="4" fill="none"/>
+<polygon points="415,415 402.58207108109,421.46490845758075 402.58207108109,408.53509154241925" fill="#3668a8"/>
+<path d="M 705 415 L 795 415" stroke="#3668a8" stroke-width="4" fill="none"/>
+<polygon points="795,415 782.58207108109,421.46490845758075 782.58207108109,408.53509154241925" fill="#3668a8"/>
+<polygon points="705,415 717.41792891891,408.53509154241925 717.41792891891,421.46490845758075" fill="#3668a8"/>
+<rect x="716.0" y="331" width="68.0" height="34" rx="5" fill="white" stroke="white" stroke-width="1"/>
+<text x="728.0" y="356" fill="#3668a8" font-family="Malgun Gothic, sans-serif" font-size="22" font-weight="700">분석</text>
+<polyline points="560,527 560,595 950,595 950,700" stroke="#3668a8" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 950 595 L 950 700" stroke="#3668a8" stroke-width="4" fill="none"/>
+<polygon points="950,700 943.5350915424192,687.58207108109 956.4649084575808,687.58207108109" fill="#3668a8"/>
+<rect x="570.5" y="570" width="369.0" height="37" rx="5" fill="white" stroke="white" stroke-width="1"/>
+<text x="582.5" y="598" fill="#3668a8" font-family="Malgun Gothic, sans-serif" font-size="25" font-weight="700">① 완성된 얼굴 특징 저장 요청</text>
+<rect x="795.0" y="705" width="310.0" height="217" rx="18" fill="white" stroke="#d8e3ef" stroke-width="2"/>
+<rect x="890" y="740" width="120" height="26" rx="6" fill="white" stroke="#3668a8" stroke-width="3"/>
+<ellipse cx="908.0" cy="753.0" rx="4.0" ry="4.0" fill="#3668a8" stroke="#3668a8" stroke-width="1"/>
+<polyline points="930,753 990,753" stroke="#3668a8" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="890" y="773" width="120" height="26" rx="6" fill="white" stroke="#3668a8" stroke-width="3"/>
+<ellipse cx="908.0" cy="786.0" rx="4.0" ry="4.0" fill="#3668a8" stroke="#3668a8" stroke-width="1"/>
+<polyline points="930,786 990,786" stroke="#3668a8" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="890" y="806" width="120" height="26" rx="6" fill="white" stroke="#3668a8" stroke-width="3"/>
+<ellipse cx="908.0" cy="819.0" rx="4.0" ry="4.0" fill="#3668a8" stroke="#3668a8" stroke-width="1"/>
+<polyline points="930,819 990,819" stroke="#3668a8" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="887.0" y="875" fill="#3668a8" font-family="Malgun Gothic, sans-serif" font-size="29" font-weight="700">관리 서버</text>
+<text x="869.5" y="910" fill="#61758a" font-family="Malgun Gothic, sans-serif" font-size="22" font-weight="400">최종 판정 · 관제</text>
+<rect x="125.0" y="705" width="370.0" height="217" rx="18" fill="white" stroke="#d8e3ef" stroke-width="2"/>
+<rect x="256" y="748" width="108" height="66" rx="1" fill="white" stroke="#3668a8" stroke-width="3"/>
+<ellipse cx="310.0" cy="813.5" rx="54.0" ry="18.5" fill="white" stroke="#3668a8" stroke-width="3"/>
+<rect x="259" y="753" width="102" height="58" rx="0" fill="white" stroke="white" stroke-width="1"/>
+<ellipse cx="310.0" cy="752.5" rx="54.0" ry="18.5" fill="#edf4fd" stroke="#3668a8" stroke-width="3"/>
+<polyline points="256,754 256,812" stroke="#3668a8" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="364,754 364,812" stroke="#3668a8" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="230.5078125" y="875" fill="#3668a8" font-family="Malgun Gothic, sans-serif" font-size="29" font-weight="700">PostgreSQL</text>
+<text x="190.5" y="910" fill="#61758a" font-family="Malgun Gothic, sans-serif" font-size="22" font-weight="400">직원 · 얼굴 · 권한 · 이력</text>
+<path d="M 495 810 L 795 810" stroke="#3668a8" stroke-width="4" fill="none"/>
+<polygon points="795,810 782.58207108109,816.4649084575808 782.58207108109,803.5350915424192" fill="#3668a8"/>
+<polygon points="495,810 507.41792891891,803.5350915424192 507.41792891891,816.4649084575808" fill="#3668a8"/>
+<rect x="497.5" y="752" width="291.0" height="36" rx="5" fill="white" stroke="white" stroke-width="1"/>
+<text x="509.5" y="779" fill="#3668a8" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="700">② 등록 저장 / 권한 조회</text>
+<text x="527.0" y="856" fill="#6b7f98" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400">출입 결과·영상 정보 기록</text>
+<rect x="1475.0" y="310" width="310.0" height="217" rx="18" fill="white" stroke="#d8e3ef" stroke-width="2"/>
+<rect x="1570" y="352" width="120" height="70" rx="12" fill="white" stroke="#27806a" stroke-width="4"/>
+<ellipse cx="1630.0" cy="386.0" rx="23.0" ry="23.0" fill="#edf4fd" stroke="#27806a" stroke-width="4"/>
+<polyline points="1607,424 1607,436 1653,436" stroke="#27806a" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="1552.5" y="480" fill="#27806a" font-family="Malgun Gothic, sans-serif" font-size="29" font-weight="700">인증 카메라</text>
+<text x="1571.0" y="515" fill="#61758a" font-family="Malgun Gothic, sans-serif" font-size="22" font-weight="400">출입자 촬영</text>
+<rect x="1455.0" y="705" width="350.0" height="217" rx="18" fill="white" stroke="#d8e3ef" stroke-width="2"/>
+<rect x="1564" y="740" width="132" height="81" rx="10" fill="white" stroke="#27806a" stroke-width="4"/>
+<polyline points="1565,764 1695,764" stroke="#27806a" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="1582.0" cy="753.0" rx="3.0" ry="3.0" fill="#27806a" stroke="#27806a" stroke-width="1"/>
+<ellipse cx="1597.0" cy="753.0" rx="3.0" ry="3.0" fill="#27806a" stroke="#27806a" stroke-width="1"/>
+<ellipse cx="1612.0" cy="753.0" rx="3.0" ry="3.0" fill="#27806a" stroke="#27806a" stroke-width="1"/>
+<ellipse cx="1630.0" cy="788.5" rx="14.0" ry="12.5" fill="#edf4fd" stroke="#27806a" stroke-width="3"/>
+<polyline points="1600,812 1610,802 1650,802 1660,812" stroke="#27806a" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="1581.5" y="875" fill="#27806a" font-family="Malgun Gothic, sans-serif" font-size="29" font-weight="700">인증 앱</text>
+<text x="1491.0" y="910" fill="#61758a" font-family="Malgun Gothic, sans-serif" font-size="22" font-weight="400">입력 · 후보 전송 · 결과 표시</text>
+<path d="M 1630 527 L 1630 700" stroke="#27806a" stroke-width="4" fill="none"/>
+<polygon points="1630,700 1623.5350915424192,687.58207108109 1636.4649084575808,687.58207108109" fill="#27806a"/>
+<rect x="1521.5" y="590" width="217.0" height="37" rx="5" fill="white" stroke="white" stroke-width="1"/>
+<text x="1533.5" y="618" fill="#27806a" font-family="Malgun Gothic, sans-serif" font-size="25" font-weight="700">③ 실시간 프레임</text>
+<rect x="1965.0" y="705" width="330.0" height="217" rx="18" fill="white" stroke="#d8e3ef" stroke-width="2"/>
+<rect x="2092" y="745" width="76" height="76" rx="10" fill="#edf4fd" stroke="#27806a" stroke-width="4"/>
+<polyline points="2092,761 2077,761" stroke="#27806a" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="2108,745 2108,730" stroke="#27806a" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="2168,761 2183,761" stroke="#27806a" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="2108,821 2108,836" stroke="#27806a" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="2092,783 2077,783" stroke="#27806a" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="2130,745 2130,730" stroke="#27806a" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="2168,783 2183,783" stroke="#27806a" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="2130,821 2130,836" stroke="#27806a" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="2092,805 2077,805" stroke="#27806a" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="2152,745 2152,730" stroke="#27806a" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="2168,805 2183,805" stroke="#27806a" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="2152,821 2152,836" stroke="#27806a" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="2115.0" y="791" fill="#27806a" font-family="Malgun Gothic, sans-serif" font-size="30" font-weight="700">AI</text>
+<text x="2081.5" y="875" fill="#27806a" font-family="Malgun Gothic, sans-serif" font-size="29" font-weight="700">인증 AI</text>
+<text x="2023.5" y="910" fill="#61758a" font-family="Malgun Gothic, sans-serif" font-size="22" font-weight="400">특징 추출 · 직원 비교</text>
+<path d="M 1805 810 L 1965 810" stroke="#27806a" stroke-width="4" fill="none"/>
+<polygon points="1965,810 1952.58207108109,816.4649084575808 1952.58207108109,803.5350915424192" fill="#27806a"/>
+<polygon points="1805,810 1817.41792891891,803.5350915424192 1817.41792891891,816.4649084575808" fill="#27806a"/>
+<rect x="1851.0" y="746" width="68.0" height="34" rx="5" fill="white" stroke="white" stroke-width="1"/>
+<text x="1863.0" y="771" fill="#27806a" font-family="Malgun Gothic, sans-serif" font-size="22" font-weight="700">분석</text>
+<text x="1864.0" y="866" fill="#27806a" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400">후보</text>
+<path d="M 1105 738 L 1455 738" stroke="#3668a8" stroke-width="4" fill="none"/>
+<polygon points="1455,738 1442.58207108109,744.4649084575808 1442.58207108109,731.5350915424192" fill="#3668a8"/>
+<rect x="1152.5" y="693" width="255.0" height="35" rx="5" fill="white" stroke="white" stroke-width="1"/>
+<text x="1164.5" y="719" fill="#3668a8" font-family="Malgun Gothic, sans-serif" font-size="23" font-weight="700">직원 얼굴 기준 동기화</text>
+<path d="M 1455 810 L 1105 810" stroke="#27806a" stroke-width="4" fill="none"/>
+<polygon points="1105,810 1117.41792891891,803.5350915424192 1117.41792891891,816.4649084575808" fill="#27806a"/>
+<rect x="1172.0" y="769" width="216.0" height="36" rx="5" fill="white" stroke="white" stroke-width="1"/>
+<text x="1184.0" y="796" fill="#27806a" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="700">④ 식별 후보 전송</text>
+<path d="M 1105 882 L 1455 882" stroke="#3668a8" stroke-width="4" fill="none"/>
+<polygon points="1455,882 1442.58207108109,888.4649084575808 1442.58207108109,875.5350915424192" fill="#3668a8"/>
+<rect x="1162.5" y="841" width="235.0" height="36" rx="5" fill="white" stroke="white" stroke-width="1"/>
+<text x="1174.5" y="868" fill="#3668a8" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="700">⑤ 허가 / 거부 응답</text>
+<text x="1223.5078125" y="1044" fill="#78889b" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400">TLS · TCP/IP</text>
+<rect x="780.0" y="1090" width="340.0" height="217" rx="18" fill="white" stroke="#d8e3ef" stroke-width="2"/>
+<rect x="884" y="1125" width="132" height="74" rx="8" fill="white" stroke="#b57a2c" stroke-width="4"/>
+<polyline points="950,1199 950,1217 920,1217 980,1217" stroke="#b57a2c" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="907,1178 928,1160 946,1172 975,1145 993,1162" stroke="#b57a2c" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="844.0" y="1260" fill="#b57a2c" font-family="Malgun Gothic, sans-serif" font-size="29" font-weight="700">기록 · 영상 확인</text>
+<text x="815.0" y="1295" fill="#61758a" font-family="Malgun Gothic, sans-serif" font-size="22" font-weight="400">출입 이력 · 타임라인 · 클립</text>
+<rect x="1765.0" y="1090" width="470.0" height="217" rx="18" fill="white" stroke="#d8e3ef" stroke-width="2"/>
+<rect x="1955" y="1120" width="95" height="83" rx="6" fill="#edf4fd" stroke="#b57a2c" stroke-width="3"/>
+<rect x="1940" y="1137" width="95" height="83" rx="6" fill="white" stroke="#b57a2c" stroke-width="3"/>
+<polyline points="1958,1159 2017,1159" stroke="#b57a2c" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="1958,1175 2017,1175" stroke="#b57a2c" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="1958,1191 2017,1191" stroke="#b57a2c" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="1903.0" y="1260" fill="#b57a2c" font-family="Malgun Gothic, sans-serif" font-size="29" font-weight="700">로컬 영상 저장</text>
+<text x="1879.5" y="1295" fill="#61758a" font-family="Malgun Gothic, sans-serif" font-size="22" font-weight="400">MP4 원본 · 클립 / JSON</text>
+<path d="M 950 922 L 950 1085" stroke="#b57a2c" stroke-width="4" fill="none"/>
+<polygon points="950,1085 943.5350915424192,1072.58207108109 956.4649084575808,1072.58207108109" fill="#b57a2c"/>
+<rect x="870.0" y="978" width="160.0" height="36" rx="5" fill="white" stroke="white" stroke-width="1"/>
+<text x="882.0" y="1005" fill="#b57a2c" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="700">⑥ 기록 조회</text>
+<polyline points="1630,922 1630,970 1120,970 1120,916 1105,916" stroke="#b57a2c" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 1120 916 L 1105 916" stroke="#b57a2c" stroke-width="4" fill="none"/>
+<polygon points="1105,916 1117.41792891891,909.5350915424192 1117.41792891891,922.4649084575808" fill="#b57a2c"/>
+<rect x="1231.0" y="935" width="208.0" height="35" rx="5" fill="white" stroke="white" stroke-width="1"/>
+<text x="1243.0" y="961" fill="#b57a2c" font-family="Malgun Gothic, sans-serif" font-size="23" font-weight="700">실시간 JPEG 영상</text>
+<polyline points="1630,922 1630,1000 2000,1000 2000,1085" stroke="#b57a2c" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 2000 1000 L 2000 1085" stroke="#b57a2c" stroke-width="4" fill="none"/>
+<polygon points="2000,1085 1993.5350915424192,1072.58207108109 2006.4649084575808,1072.58207108109" fill="#b57a2c"/>
+<rect x="1741.0" y="976" width="208.0" height="36" rx="5" fill="white" stroke="white" stroke-width="1"/>
+<text x="1753.0" y="1003" fill="#b57a2c" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="700">카메라 구간 녹화</text>
+<path d="M 1765 1195 L 1120 1195" stroke="#b57a2c" stroke-width="4" fill="none"/>
+<polygon points="1120,1195 1132.41792891891,1188.5350915424192 1132.41792891891,1201.4649084575808" fill="#b57a2c"/>
+<polygon points="1765,1195 1752.5820710810901,1201.4649084575808 1752.58207108109,1188.5350915424192" fill="#b57a2c"/>
+<rect x="1253.5" y="1139" width="379.0" height="36" rx="5" fill="white" stroke="white" stroke-width="1"/>
+<text x="1265.5" y="1166" fill="#b57a2c" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="700">⑦ 시각 선택 → 영상 요청 / 제공</text>
+<text x="1284.0" y="1253" fill="#b57a2c" font-family="Malgun Gothic, sans-serif" font-size="22" font-weight="400">녹화 영상은 요청한 구간을 제공</text>
+<text x="95" y="1352" fill="#3668a8" font-family="Malgun Gothic, sans-serif" font-size="25" font-weight="400">서버에서 얼굴 등록 → 클라이언트에 기준 동기화 → 식별 후보를 서버가 최종 판정</text>
+<text x="67" y="1454" fill="#566d84" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="400">파랑: 등록·서버 처리     초록: 실시간 식별     주황: 영상·기록</text>
+<text x="67" y="1492" fill="#78889b" font-family="Malgun Gothic, sans-serif" font-size="22" font-weight="400">논리적 배치도 · 동일 PC 실행 가능 · 실제 두 PC 통합 완료를 뜻하지 않음</text>
+</svg>

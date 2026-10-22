@@ -1,0 +1,12 @@
+flowchart LR
+    RC[등록 카메라] --> EN[얼굴 등록 앱 / WPF]
+    EN <-->|프레임·명령·분석 결과| PA[등록용 Python AI]
+    EN <-->|로컬 등록 API| SV[관리 서버 / WPF]
+    SV <--> DB[(PostgreSQL)]
+    CC[인증 카메라] --> CL[인증 클라이언트 / WPF]
+    CL <-->|프레임·명령·분석 결과| CA[인증용 Python AI]
+    SV -->|등록 직원 기준 동기화 / TLS| CL
+    CL -->|식별 후보·실시간 영상·녹화 정보 / TLS| SV
+    SV -->|최종 허가·거부·영상 요청 / TLS| CL
+    CL --> FILE[로컬 녹화·클립]
+    FILE --> CL
