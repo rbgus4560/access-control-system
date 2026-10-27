@@ -1,4 +1,4 @@
-// 파일 역할: 녹화 메타데이터 저장·목록 조회를 담당합니다. 원본 파일 대신 클라이언트 위치와 구간 상태를 DB에 기록합니다.
+﻿// 파일 역할: 녹화 메타데이터 저장·목록 조회를 담당합니다. 원본 파일 대신 클라이언트 위치와 구간 상태를 DB에 기록합니다.
 // 기능 기준: 12.3 정상 동작 버전. 코드 설명과 서식을 정리한 소스입니다.
 
 using System.IO;
@@ -142,16 +142,16 @@ public sealed partial class FaceDatabase
                 new(
                     reader.GetGuid(0),
                     reader.GetString(1),
-                    reader.GetDateTime(2).ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.fff"),
+                    reader.GetDateTime(2).ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"),
                     reader.IsDBNull(3)
                         ? null
-                        : reader.GetDateTime(3).ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.fff"),
+                        : reader.GetDateTime(3).ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"),
                     reader.GetString(4),
                     reader.IsDBNull(5) ? null : reader.GetInt64(5),
                     reader.GetString(6),
                     reader.IsDBNull(7)
                         ? null
-                        : reader.GetDateTime(7).ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.fff"),
+                        : reader.GetDateTime(7).ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"),
                     reader.IsDBNull(8) ? null : reader.GetString(8)
                 )
             );

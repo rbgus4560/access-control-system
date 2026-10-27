@@ -1,4 +1,4 @@
-// 파일 역할: 등록·인증에서 재사용하는 카메라와 AI 표시 패널입니다. 화면 갱신과 기준 적용 중 이전 비교 결과를 숨깁니다.
+﻿// 파일 역할: 등록·인증에서 재사용하는 카메라와 AI 표시 패널입니다. 화면 갱신과 기준 적용 중 이전 비교 결과를 숨깁니다.
 // 기능 기준: 12.3 정상 동작 버전. 코드 설명과 서식을 정리한 소스입니다.
 
 using System.IO;
@@ -15,7 +15,7 @@ using AccessControl.Faces;
 
 namespace AccessControl.Ai;
 
-public sealed class FaceAiPanel : UserControl, IAsyncDisposable
+public sealed partial class FaceAiPanel : UserControl, IAsyncDisposable
 {
     private readonly string role;
     private readonly AiClient client = new();
@@ -32,6 +32,25 @@ public sealed class FaceAiPanel : UserControl, IAsyncDisposable
         backend = new() { Width = 90 };
     private readonly CheckBox yaw = new() { Content = "좌우 반전 보정" },
         pitch = new() { Content = "상하 반전 보정" };
+    private readonly Image analysisView = new() { Stretch = Stretch.Uniform, Visibility = Visibility.Collapsed };
+    private readonly TextBlock analysisLabel = new()
+    {
+        Foreground = Brushes.White, Background = Brushes.Transparent,
+        Margin = new Thickness(12), Padding = new Thickness(8, 4, 8, 4),
+        HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top,
+        Visibility = Visibility.Collapsed, Text = "분석 화면 · 새 분석 결과 대기"
+    };
+
+    // 라이브 위에 과거 좌표를 그리지 않고 동일 시점의 주석 포함 분석 프레임을 표시합니다.
+    public void SetAnalysisVisible(bool visible)
+    {
+        analysisVisible = visible;
+        analysisLabel.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+        analysisView.Visibility = Visibility.Collapsed;
+        analysisLabel.Text = "분석 화면 · 새 분석 결과 대기";
+        if (visible) Refresh();
+    }
+
     private readonly Image live = new() { Stretch = Stretch.Uniform },
         analyzed = new() { Stretch = Stretch.Uniform };
     private readonly TextBlock status = Text("카메라·AI 연결을 눌러 주세요."),
@@ -84,7 +103,22 @@ public sealed class FaceAiPanel : UserControl, IAsyncDisposable
     public FaceAiPanel(string role)
     {
         this.role = role;
+        foreach (var overlayText in new[] { videoClock, cameraCaption, decisionText, analysisLabel })
+            overlayText.Effect = new System.Windows.Media.Effects.DropShadowEffect
+            {
+                Color = Colors.Black, BlurRadius = 4, ShadowDepth = 1.5, Opacity = 1
+            };
         var saved = AiSettings.Load(role);
+        cameraDisplayName.Text = string.IsNullOrWhiteSpace(saved.CameraDisplayName)
+            ? "CAM-01 · 출입구" : saved.CameraDisplayName;
+        displayCameraName = cameraDisplayName.Text;
+        cameraCaption.Text = displayCameraName;
+        cameraDisplayName.TextChanged += (_, _) =>
+        {
+            // 영상 송신 스레드는 WPF TextBox를 읽지 않고 문자열 스냅샷만 읽습니다.
+            System.Threading.Volatile.Write(ref displayCameraName, DisplayCameraName());
+            cameraCaption.Text = displayCameraName;
+        };
         python.Text = saved.Python;
         directory.Text = saved.AiDirectory;
         modelHome.Text = saved.ModelHome;
@@ -98,6 +132,20 @@ public sealed class FaceAiPanel : UserControl, IAsyncDisposable
         var root = new DockPanel();
         Content = root;
         var setup = new StackPanel();
+        if (role == "recognition")
+        {
+            var nameRow = PathRow("표시 이름", cameraDisplayName, false);
+            setup.Children.Add(nameRow);
+            setup.Children.Add(Button("표시 이름 저장", () =>
+            {
+                // 화면용 이름만 저장해 실행 중인 장치 번호와 통신 식별자는 변경하지 않습니다.
+                var current = AiSettings.Load(role);
+                current.CameraDisplayName = DisplayCameraName();
+                current.Save(role);
+                cameraDisplayName.Text = current.CameraDisplayName;
+                return Task.CompletedTask;
+            }));
+        }
         setup.Children.Add(PathRow("Python", python, true));
         setup.Children.Add(PathRow("AI 폴더", directory, false));
         setup.Children.Add(PathRow("모델 폴더", modelHome, false));
@@ -198,20 +246,45 @@ public sealed class FaceAiPanel : UserControl, IAsyncDisposable
         };
         DockPanel.SetDock(diagnostic, Dock.Bottom);
         root.Children.Add(diagnostic);
-        var main = ImagePanel(role == "enrollment" ? null : "LIVE CAMERA", live);
+        var main = ImagePanel(null, live);
+        foreach (var image in new[] { live, analyzed, analysisView })
+        {
+            // 모든 카메라 표시를 거울처럼 통일합니다. 분석·전송·녹화 프레임은 원본입니다.
+            image.RenderTransformOrigin = new Point(.5, .5);
+            image.RenderTransform = new ScaleTransform(-1, 1);
+        }
         main.MinHeight = 160;
         root.Children.Add(main);
         if (role == "recognition")
         {
+            var cameraViewport = new Grid();
+            root.Children.Remove(main);
+            // 인증 화면에서는 영상과 오버레이가 같은 뷰포트를 사용합니다.
+            ((Panel)live.Parent).Children.Remove(live);
+            cameraViewport.Children.Add(live);
+            cameraViewport.Children.Add(analysisView);
+            recognitionViewport = cameraViewport;
+            videoOverlay.HorizontalAlignment = HorizontalAlignment.Center;
+            videoOverlay.VerticalAlignment = VerticalAlignment.Center;
+            decisionRibbon.Child = decisionText;
+            analysisLabel.Margin = new Thickness(14, 58, 14, 14);
+            videoOverlay.Children.Add(videoClock);
+            videoOverlay.Children.Add(cameraCaption);
+            videoOverlay.Children.Add(analysisLabel);
+            videoOverlay.Children.Add(decisionRibbon);
+            cameraViewport.Children.Add(videoOverlay);
+            cameraViewport.SizeChanged += (_, _) => UpdateVideoOverlay();
+            root.Children.Add(cameraViewport);
             foreach (
                 UIElement element in root
                     .Children.Cast<UIElement>()
-                    .Where(e => !ReferenceEquals(e, main))
+                    .Where(e => !ReferenceEquals(e, cameraViewport))
                     .ToArray()
             )
             {
                 root.Children.Remove(element);
-                OperationsView.Children.Add(element);
+                // 분석 상세는 메인 화면의 분석 토글로 이동합니다. 등록 앱의 상세 패널은 유지합니다.
+                if (!ReferenceEquals(element, diagnostic)) OperationsView.Children.Add(element);
             }
         }
         else
@@ -253,7 +326,7 @@ public sealed class FaceAiPanel : UserControl, IAsyncDisposable
             coverageHint.FontSize = 20;
             coverageHint.FontWeight = FontWeights.SemiBold;
             var guideText = new StackPanel();
-            var caption = Text("LIVE CAMERA · 원본 영상 · 화면 기준 안내");
+            var caption = Text("LIVE CAMERA · 거울 미리보기 · 화면 기준 안내");
             caption.Foreground = Brushes.LightSteelBlue;
             caption.FontSize = 11;
             caption.Margin = new Thickness(3, 0, 3, 7);
@@ -273,18 +346,28 @@ public sealed class FaceAiPanel : UserControl, IAsyncDisposable
             EnrollmentControls.Children.Add(animateGuide);
             viewport.Children.Add(guideHeader);
             root.Children.Add(viewport);
-            var cameraButtons = new WrapPanel();
+            foreach (var button in new[] { start, stop, enroll, capture })
+            {
+                button.HorizontalAlignment = HorizontalAlignment.Stretch;
+                button.HorizontalContentAlignment = HorizontalAlignment.Center;
+                button.Height = 38;
+                button.Margin = new Thickness(0, 4, 0, 4);
+                ((Wpf.Ui.Controls.Button)button).Appearance = Wpf.Ui.Controls.ControlAppearance.Primary;
+            }
+            start.Content = "카메라 연결";
+            stop.Visibility = capture.Visibility = Visibility.Collapsed;
+            var cameraButtons = new Grid();
             cameraButtons.Children.Add(start);
             cameraButtons.Children.Add(stop);
             EnrollmentControls.Children.Add(cameraButtons);
-            var registrationButtons = new WrapPanel();
+            var registrationButtons = new Grid();
             registrationButtons.Children.Add(enroll);
             registrationButtons.Children.Add(capture);
             EnrollmentControls.Children.Add(registrationButtons);
             EnrollmentControls.Children.Add(livePose);
             foreach (string key in new[] { "FRONT", "LEFT", "RIGHT", "UP", "DOWN" })
             {
-                var row = Text("○  " + PoseName(key));
+                var row = Text("○  " + PoseName(MirrorPose(key)));
                 row.Margin = new Thickness(5, 9, 5, 9);
                 row.FontSize = 15;
                 stages.Add(key, row);
@@ -297,7 +380,7 @@ public sealed class FaceAiPanel : UserControl, IAsyncDisposable
             EnrollmentControls.Children.Add(message);
         }
 
-        timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(40) };
+        timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1.0 / 30) };
         timer.Tick += (_, _) => Refresh();
         timer.Start();
         SetConnected(false);
@@ -305,99 +388,15 @@ public sealed class FaceAiPanel : UserControl, IAsyncDisposable
         if (role == "enrollment" && Environment.GetCommandLineArgs().Contains("--ui-preview")
             && Environment.GetCommandLineArgs().Contains("--guide-preview"))
         {
-            motionGuide.ShowStage("LEFT");
-            coverageHint.Text = "화면 왼쪽으로 천천히 돌려 주세요.";
+            motionGuide.ShowStage("RIGHT");
+            coverageHint.Text = "화면 오른쪽으로 천천히 돌려 주세요.";
         }
     }
 
-    private static TextBlock Text(string value) =>
-        new()
-        {
-            Text = value,
-            Margin = new Thickness(3),
-            TextWrapping = TextWrapping.Wrap
-        };
+    public string CameraDisplayName => System.Threading.Volatile.Read(ref displayCameraName);
 
-    private static Button Button(string caption, Func<Task> action)
-    {
-        var button = new Wpf.Ui.Controls.Button
-        {
-            Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary,
-            Content = caption,
-            Margin = new Thickness(3),
-            Padding = new Thickness(10, 7, 10, 7)
-        };
-        if (caption is "카메라·AI 연결" or "등록 시작")
-            button.Appearance = Wpf.Ui.Controls.ControlAppearance.Primary;
-        button.Click += async (_, _) =>
-        {
-            try
-            {
-                await action();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "AI 연결");
-            }
-        };
-        return button;
-    }
-
-    private static DockPanel PathRow(string caption, TextBox box, bool browse)
-    {
-        var row = new DockPanel { Margin = new Thickness(3) };
-        var label = Text(caption);
-        label.Width = 80;
-        DockPanel.SetDock(label, Dock.Left);
-        row.Children.Add(label);
-        if (browse)
-        {
-            var pick = Button(
-                "찾기",
-                () =>
-                {
-                    var dialog = new OpenFileDialog
-                    {
-                        Filter = "Python 실행 파일|python.exe|실행 파일|*.exe"
-                    };
-                    if (dialog.ShowDialog() == true)
-                        box.Text = dialog.FileName;
-                    return Task.CompletedTask;
-                }
-            );
-            DockPanel.SetDock(pick, Dock.Right);
-            row.Children.Add(pick);
-        }
-
-        box.MinWidth = 120;
-        box.Padding = new Thickness(4);
-        box.VerticalContentAlignment = VerticalAlignment.Center;
-        row.Children.Add(box);
-        return row;
-    }
-
-    private static Border ImagePanel(string? caption, Image image)
-    {
-        var dock = new DockPanel();
-        if (caption is not null)
-        {
-            var label = Text(caption);
-            label.Foreground = Brushes.White;
-            DockPanel.SetDock(label, Dock.Top);
-            dock.Children.Add(label);
-        }
-
-        dock.Children.Add(image);
-        return new Border
-        {
-            Child = dock,
-            Background = new SolidColorBrush(Color.FromRgb(20, 32, 51)),
-            CornerRadius = new CornerRadius(10),
-            ClipToBounds = true,
-            Margin = new Thickness(4),
-            Padding = new Thickness(8)
-        };
-    }
+    private string DisplayCameraName() => string.IsNullOrWhiteSpace(cameraDisplayName.Text)
+        ? "CAM-01 · 출입구" : cameraDisplayName.Text.Trim();
 
     private AiSettings ReadSettings() =>
         new()
@@ -405,6 +404,7 @@ public sealed class FaceAiPanel : UserControl, IAsyncDisposable
             Python = Path.GetFullPath(python.Text.Trim()),
             AiDirectory = Path.GetFullPath(directory.Text.Trim()),
             ModelHome = Path.GetFullPath(modelHome.Text.Trim()),
+            CameraDisplayName = DisplayCameraName(),
             Camera = camera.SelectedItem is int value ? value : 0,
             Backend = backend.SelectedItem as string ?? "dshow",
             ReverseYaw = yaw.IsChecked == true,
@@ -446,7 +446,7 @@ public sealed class FaceAiPanel : UserControl, IAsyncDisposable
             coverageHint.Text = "카메라를 연결한 뒤 등록을 시작하세요.";
             foreach (var (key, row) in stages)
             {
-                row.Text = "○  " + PoseName(key);
+                row.Text = "○  " + PoseName(MirrorPose(key));
                 row.Foreground = Brushes.SlateGray;
             }
 
@@ -460,7 +460,11 @@ public sealed class FaceAiPanel : UserControl, IAsyncDisposable
         start.IsEnabled = false;
         StateUpdated?.Invoke(new AiState(), false);
         match.Text = "비교 중지 · 연결 종료 중";
-        live.Source = analyzed.Source = null;
+        ClearAccessDecision();
+        live.Source = analyzed.Source = analysisView.Source = null;
+        UpdateVideoOverlay();
+        analysisView.Visibility = Visibility.Collapsed;
+        analysisLabel.Text = "분석 화면 · 새 분석 결과 대기";
         await client.StopAsync();
         start.IsEnabled = true;
         rendered = null;
@@ -486,6 +490,13 @@ public sealed class FaceAiPanel : UserControl, IAsyncDisposable
         clear.IsEnabled = connected || inbox.HasReference;
         enroll.IsEnabled = capture.IsEnabled = compare.IsEnabled = false;
         settings.IsEnabled = !connected;
+        if (role == "enrollment")
+        {
+            start.Visibility = connected ? Visibility.Collapsed : Visibility.Visible;
+            stop.Visibility = connected ? Visibility.Visible : Visibility.Collapsed;
+            enroll.Visibility = Visibility.Visible;
+            capture.Visibility = Visibility.Collapsed;
+        }
     }
 
     private async Task SendAsync(string key)
@@ -501,148 +512,6 @@ public sealed class FaceAiPanel : UserControl, IAsyncDisposable
         {
             awaitingCommand = false;
             throw;
-        }
-    }
-
-    public Task ExportAsync() => SendAsync("export");
-
-    public async Task<JsonElement> ExportReferenceAsync(CancellationToken token)
-    {
-        var completion = new TaskCompletionSource<JsonElement>(
-            TaskCreationOptions.RunContinuationsAsynchronously
-        );
-        void Receive(JsonElement value) => completion.TrySetResult(value.Clone());
-        ReferenceReceived += Receive;
-        try
-        {
-            await SendAsync("export");
-            return await completion.Task.WaitAsync(TimeSpan.FromSeconds(10), token);
-        }
-        finally
-        {
-            ReferenceReceived -= Receive;
-        }
-    }
-
-    public Task ClearReferenceAsync() => ClearAsync();
-
-    private Task ClearAsync()
-    {
-        ReferenceRevision++;
-        inbox.Clear();
-        importFailed = false;
-        if (client.Running)
-            return SendAsync("c");
-        progress.Text = "기준 얼굴 없음";
-        message.Text = "임시 기준 초기화 완료";
-        match.Text = "얼굴 비교 대기";
-        clear.IsEnabled = false;
-        return Task.CompletedTask;
-    }
-
-    public async Task ImportReferenceAsync(JsonElement reference, string label)
-    {
-        await Dispatcher.InvokeAsync(() =>
-        {
-            if (disposed)
-                throw new ObjectDisposedException(nameof(FaceAiPanel));
-            if (role != "recognition")
-                throw new InvalidOperationException("인증 앱에서만 수신 가능합니다.");
-            inbox.Receive(reference, label);
-            importFailed = false;
-            ReferenceRevision++;
-            compare.IsEnabled = false;
-            clear.IsEnabled = true;
-            match.Text = "얼굴 기준 수신 · 자동 보정·비교 대기";
-            progress.Text = $"임시 기준 수신 {inbox.Count}/{inbox.Count} · " + label;
-            message.Text = client.Running
-                ? "AI 준비 후 등록 기준 적용 대기"
-                : "카메라·AI를 연결한 뒤 정면을 잠깐 바라봐 주세요. 자동 보정 후 비교를 시작합니다.";
-        });
-    }
-
-    private async Task LoadPendingReferenceAsync(ReferenceSnapshot value)
-    {
-        awaitingCommand = true;
-        match.Text = "등록 기준 적용 중 · 이전 비교 결과 숨김";
-        try
-        {
-            await client.SendAsync("load", value.Reference, value.Label);
-        }
-        catch (Exception ex)
-        {
-            importFailed = true;
-            awaitingCommand = false;
-            message.Text = "기준 적용 실패 · 카메라·AI를 다시 연결해 주세요. " + ex.Message;
-        }
-    }
-
-    public Task ImportGalleryAsync(FaceGallerySnapshot value) =>
-        Dispatcher
-            .InvokeAsync(() =>
-            {
-                if (disposed)
-                    throw new ObjectDisposedException(nameof(FaceAiPanel));
-                if (role != "recognition")
-                    throw new InvalidOperationException("인증 앱에서만 직원 기준을 적용합니다.");
-                if (gallery?.Id == value.Id)
-                    return;
-                try
-                {
-                    galleryStop?.Cancel();
-                }
-                catch (ObjectDisposedException) { }
-
-                gallery = value;
-                galleryPending = true;
-                importFailed = false;
-                ReferenceRevision++;
-                match.Text = $"직원 기준 {value.People.Count}명 수신 · AI 적용 대기";
-            })
-            .Task;
-
-    // 시작·직원별 추가·완료 순서로 전체 기준을 전달합니다. 적용 중에는 이전 얼굴 비교 결과를 인증에 사용하지 않습니다.
-    private async Task LoadGalleryAsync(FaceGallerySnapshot value)
-    {
-        galleryLoading = true;
-        galleryPending = false;
-        importFailed = false;
-        galleryAttemptAt = Stopwatch.GetTimestamp();
-        using var cancel = new CancellationTokenSource();
-        galleryStop = cancel;
-        try
-        {
-            await client.SendAppliedAsync(
-                "gallery_begin",
-                new { gallery_id = value.Id, count = value.People.Count },
-                cancel.Token
-            );
-            foreach (var person in value.People)
-                await client.SendAppliedAsync(
-                    "gallery_add",
-                    new { person_id = person.PersonId.ToString("D"), reference = person.Reference },
-                    cancel.Token
-                );
-            await client.SendAppliedAsync(
-                "gallery_commit",
-                new { gallery_id = value.Id },
-                cancel.Token
-            );
-            if (client.State?.State.GalleryId != value.Id)
-                throw new InvalidDataException("직원 기준 적용 버전 불일치");
-        }
-        catch (OperationCanceledException) when (cancel.IsCancellationRequested) { }
-        catch (Exception ex)
-        {
-            importFailed = true;
-            galleryPending = true;
-            message.Text = "직원 기준 적용 재시도 · " + ex.GetBaseException().Message;
-        }
-        finally
-        {
-            galleryLoading = false;
-            if (ReferenceEquals(galleryStop, cancel))
-                galleryStop = null;
         }
     }
 
@@ -672,6 +541,14 @@ public sealed class FaceAiPanel : UserControl, IAsyncDisposable
         }
     }
 
+    // 등록 화면의 방향 표시만 뒤집고 내부 키와 수집 순서는 유지합니다.
+    private static string? MirrorPose(string? pose) => pose switch
+    {
+        "LEFT" => "RIGHT", "RIGHT" => "LEFT",
+        "UP_LEFT" => "UP_RIGHT", "UP_RIGHT" => "UP_LEFT",
+        "DOWN_LEFT" => "DOWN_RIGHT", "DOWN_RIGHT" => "DOWN_LEFT", _ => pose
+    };
+
     public static string PoseName(string? pose) =>
         pose switch
         {
@@ -688,255 +565,6 @@ public sealed class FaceAiPanel : UserControl, IAsyncDisposable
         };
 
     // 최신 분석의 나이·명령 적용 순서·기준 버전을 함께 확인한 뒤 화면과 인증 관측을 갱신합니다.
-    private void Refresh()
-    {
-        if (disposed || suspended)
-            return;
-        while (client.Notifications.TryDequeue(out var packet))
-        {
-            switch (packet.Type)
-            {
-                case "ready":
-                    status.Text = "카메라 연결 · AI 준비 중";
-                    break;
-                case "recording_status":
-                    RecordingStatusChanged?.Invoke(packet.Message ?? "녹화 상태 확인 필요");
-                    break;
-                case "progress":
-                    if (client.State is null)
-                        status.Text = packet.Message ?? "AI 준비 중";
-                    break;
-                case "queued":
-                    if (packet.RequestId == client.LatestRequestId)
-                    {
-                        requiredCommand = packet.Id;
-                        awaitingCommand = false;
-                    }
-
-                    break;
-                case "reference" when packet.Reference is { } reference:
-                    ReferenceReceived?.Invoke(reference);
-                    break;
-                case "error":
-                    message.Text = packet.Error ?? "명령 처리 오류";
-                    requiredCommand = 0;
-                    awaitingCommand = false;
-                    break;
-                case "fatal":
-                    status.Text = packet.Error ?? "AI 연결 종료";
-                    match.Text = "비교 중지 · AI 연결 없음";
-                    rendered = null;
-                    StateUpdated?.Invoke(new AiState(), false);
-                    _ = RecoverAsync(packet.Error ?? "AI 연결 종료");
-                    return;
-            }
-        }
-
-        if (suspended)
-            return;
-        var video = client.TakeLive();
-        if (video is not null)
-        {
-            SetImage(live, video.Jpeg);
-            LiveFrameUpdated?.Invoke(video);
-        }
-
-        var value = client.State;
-        if (value is null)
-            return;
-        var state = value.State;
-        var age = state.AgeMs + Stopwatch.GetElapsedTime(value.ReceivedAt).TotalMilliseconds;
-        AnalysisAgeMs = age;
-        // Wait for the first actual AI result, so startup cannot expire a load
-        // command while native libraries/models are still being prepared.
-        if (
-            gallery is not null
-            && galleryPending
-            && !galleryLoading
-            && client.Running
-            && age <= 2500
-            && (
-                galleryAttemptAt == 0
-                || Stopwatch.GetElapsedTime(galleryAttemptAt).TotalSeconds >= 5
-            )
-        )
-            _ = LoadGalleryAsync(gallery);
-        if (
-            gallery is null
-            && client.Running
-            && !awaitingCommand
-            && !importFailed
-            && age <= 2500
-            && inbox.TryTakePending(out var pending)
-        )
-            _ = LoadPendingReferenceAsync(pending!);
-        var fresh =
-            client.Running
-            && !awaitingCommand
-            && !inbox.HasPending
-            && !importFailed
-            && !galleryLoading
-            && !galleryPending
-            && (
-                gallery is null
-                || state.GalleryId == gallery.Id && state.GalleryCount == gallery.People.Count
-            )
-            && age <= 2500
-            && state.CommandId >= requiredCommand;
-        if (!ReferenceEquals(rendered, value))
-        {
-            SetImage(analyzed, value.Jpeg);
-            rendered = value;
-        }
-
-        analyzedCaption.Text = $"마지막 분석 프레임 · {age / 1000:0.00}초 전";
-        analyzedCaption.Foreground = Brushes.SlateGray;
-        status.Text = !fresh
-            ? "새 분석 결과 대기 · 이전 비교 결과 숨김"
-            : state.Reason switch
-            {
-                "OK" => "얼굴 검출 정상",
-                "MULTIPLE_FACES" or "MULTIPLE_DLIB_FACES" =>
-                    "여러 얼굴 감지 · 한 명씩 인증해 주세요",
-                "NO_MESH" or "DLIB_NO_FACE" => "얼굴 검출 대기 · 카메라를 바라봐 주세요",
-                "MOVE_CLOSER" => "카메라에 조금 가까이 와 주세요",
-                "BLUR_OR_LOW_DETAIL" => "얼굴 선명도 부족 · 자세와 조명을 확인해 주세요",
-                _ => "분석 대기: " + state.Reason
-            };
-        direction.Text =
-            $"현재: {PoseName(state.Pose)} · {(state.AutoEnrollment ? "권장 방향" : "다음 촬영")}: {(state.Expected is null ? "—" : PoseName(state.Expected))} · 안정된 분석 {state.Stable}회";
-        if (state.GuidedEnrollment)
-            direction.Text = $"현재 자세: {PoseName(state.Pose)} · 움직임에서 샘플 자동 선택";
-        int target = state.EnrollmentTarget is 5 or 9 ? state.EnrollmentTarget : 9;
-        progress.Text = state.Enrolling
-            ? $"등록 진행 {state.PendingCount}/{target} · 이전 기준 {state.ReferenceCount}개 유지"
-            : $"인증 기준 {state.ReferenceCount}개";
-        if (state.GalleryMode)
-            progress.Text =
-                $"자동 직원 기준 {state.GalleryCount}명 · {(fresh ? "적용 완료" : "동기화/분석 대기")}";
-        progress.Text +=
-            state.GalleryMode || state.ReferenceLabel.Length == 0
-                ? ""
-                : " · 기준 표시: " + state.ReferenceLabel;
-        if (role == "enrollment")
-        {
-            enrollmentProgress.Opacity = fresh ? 1 : .35;
-            enrollmentProgress.Value =
-                state.Enrolling ? state.PendingCount * 100.0 / 9
-                : state.ReferenceCount == 9 ? 100
-                : 0;
-            livePose.Text = "현재 감지 방향: " + (fresh ? PoseName(state.Pose) : "분석 대기");
-            livePose.Text += " · 방향은 화면 속 얼굴 기준";
-            motionGuide.ShowStage(fresh && state.Enrolling && state.Reason == "OK"
-                && animateGuide.IsChecked == true ? state.Expected : null);
-            bool returning = state.Enrolling && state.Expected == "FRONT" && state.PendingCount > 0;
-            string guide = state.Expected switch
-            {
-                "FRONT" => "정면을 바라봐 주세요. 정면 기준을 자동으로 잡습니다.",
-                "LEFT" => "고개를 천천히 왼쪽으로 돌렸다가 정면으로 돌아와 주세요.",
-                "RIGHT" => "고개를 천천히 오른쪽으로 돌렸다가 정면으로 돌아와 주세요.",
-                "UP" => "고개를 천천히 위로 들었다가 정면으로 돌아와 주세요.",
-                "DOWN" => "턱을 천천히 내렸다가 정면으로 돌아와 주세요.",
-                _ => "안내를 따라 천천히 움직여 주세요."
-            };
-            coverageHint.Text =
-                !fresh ? "카메라·AI 상태 확인 중 · 새 분석을 기다려 주세요."
-                : state.Enrolling
-                    ? (returning ? "정면으로 돌아와 주세요. 다음 방향을 안내합니다." : guide)
-                : state.ReferenceCount == 9
-                    ? "샘플 준비 완료 · 선택 직원을 확인하고 DB 저장을 누르세요."
-                : "정면을 바라본 상태에서 등록 시작을 누르세요.";
-            // 전체 진행률은 두 샘플이 선택된 뒤에 오릅니다. 그 전에도 부족한 각도를 안내합니다.
-            if (fresh && state.Enrolling && state.GuidedEnrollment && state.Reason == "OK"
-                && !string.IsNullOrWhiteSpace(state.EnrollmentHint))
-                coverageHint.Text = state.EnrollmentHint;
-            coverageHint.Text = coverageHint.Text.Replace("왼쪽", "화면 왼쪽").Replace("오른쪽", "화면 오른쪽");
-            foreach (var (key, row) in stages)
-            {
-                int required =
-                    key == "FRONT" ? 1
-                    : state.Enrolling || state.Coverage.Any(p => p.EndsWith("#2")) ? 2
-                    : 1;
-                int count =
-                    (state.Coverage.Contains(key) ? 1 : 0)
-                    + (required == 2 && state.Coverage.Contains(key + "#2") ? 1 : 0);
-                bool complete = fresh && count >= required;
-                bool active = fresh && state.Enrolling && key == state.Expected;
-                row.Text =
-                    (
-                        active ? "●  "
-                        : complete ? "✓  "
-                        : "○  "
-                    )
-                    + PoseName(key)
-                    + (key is "LEFT" or "RIGHT" ? " (화면 기준)" : "")
-                    + (fresh ? $"  {count}/{required}" : "  확인 대기")
-                    + (returning && key == "FRONT" ? " · 복귀" : "");
-                row.Foreground =
-                    active ? Brushes.RoyalBlue
-                    : complete ? Brushes.DarkGreen
-                    : Brushes.SlateGray;
-            }
-
-            progress.Text =
-                !fresh ? "등록 상태 확인 중"
-                : state.Enrolling
-                    ? $"자동 수집·선택 {state.PendingCount * 100 / 9}% · 적합 후보 {state.AcceptedCandidates}개 · 기존 기준 유지"
-                : $"인증 기준 {state.ReferenceCount}개";
-        }
-
-        string Millis(string key) =>
-            state.Timings.TryGetValue(key, out var number) && number.HasValue
-                ? number.Value.ToString("0")
-                : "—";
-        timing.Text =
-            $"처리(ms): Mesh {Millis("mesh_ms")} / 검출·정렬 {Millis("dlib_ms")} / ArcFace {Millis("embedding_ms")} / 전체 {Millis("total_ms")}";
-        message.Text = Explain(state.Message);
-        if (
-            fresh
-            && state.Matching
-            && state.Comparison is { ValueKind: JsonValueKind.Array } comparison
-            && comparison.GetArrayLength() == 3
-        )
-        {
-            var distance = comparison[0].GetDouble();
-            var candidate = comparison[2].GetBoolean();
-            match.Text =
-                $"{(candidate ? "등록 얼굴 일치 후보" : "등록 얼굴 불일치")} · 거리 {distance:0.000} / 기준 0.450 · 마지막 분석 프레임 기준";
-            match.Foreground = candidate ? Brushes.DarkGreen : Brushes.Firebrick;
-        }
-        else
-        {
-            match.Text =
-                role == "recognition" && fresh && state.AutomaticRecognition
-                    ? state.ReferenceCount is not (5 or 9)
-                        ? "서버에서 등록 직원 기준을 자동 동기화합니다."
-                        : !state.AutoStartEnabled && !state.Matching
-                            ? "얼굴 비교 중지 · 비교 시작 버튼으로 다시 켜세요."
-                            : !state.Calibrated
-                                ? "정면을 바라보고 잠시 멈춰 주세요 · 자동 보정 대기"
-                                : state.Matching
-                                    ? "얼굴 비교 중 · 한 명의 선명한 얼굴을 기다립니다."
-                                    : "자동 비교 시작 대기"
-                    : "얼굴 비교 대기/중지";
-            match.Foreground = Brushes.DimGray;
-        }
-
-        if (fresh && state.Identification?.Result == "AMBIGUOUS")
-        {
-            match.Text = "식별 보류 · 두 직원의 얼굴 점수가 비슷합니다. 정면·조명을 조정해 주세요.";
-            match.Foreground = Brushes.DarkOrange;
-        }
-
-        compare.Content = state.Matching ? "얼굴 비교 중지" : "얼굴 비교 시작";
-        calibrate.IsEnabled = fresh && state.Reason == "OK";
-        enroll.IsEnabled = fresh && state.Reason == "OK" && !state.Enrolling;
-        capture.IsEnabled = client.Running && state.Enrolling;
-        compare.IsEnabled =
-            fresh && state.Calibrated && state.ReferenceCount is 5 or 9 && !state.Enrolling;
-        StateUpdated?.Invoke(state, fresh);
-    }
-
     private async Task RecoverAsync(string error)
     {
         try

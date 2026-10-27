@@ -16,6 +16,7 @@ public sealed record VideoPacket
     public int Version { get; init; } = 1;
     public string ClientCode { get; init; } = "RECOGNITION-01";
     public string CameraCode { get; init; } = "CAM-01";
+    public string CameraDisplayName { get; init; } = "";
     public Guid Session { get; init; }
     public long Sequence { get; init; }
     public DateTimeOffset SentAt { get; init; }
@@ -50,7 +51,8 @@ public static class VideoProtocol
     public static void Validate(VideoPacket p)
     {
         if (
-            p.Version != 1
+            p.CameraDisplayName is null || p.CameraDisplayName.Length > 60 || p.CameraDisplayName.Any(char.IsControl)
+            || p.Version != 1
             || p.ClientCode != "RECOGNITION-01"
             || p.CameraCode != "CAM-01"
             || p.Session == Guid.Empty
@@ -107,6 +109,7 @@ public static class VideoProtocol
 // Only the latest received JPEG is retained; a slow connection cannot build a frame queue.
 public sealed class VideoSource
 {
+    public Func<string>? DisplayName { get; set; }
     private sealed record Frame(string Base64, long At);
 
     private Frame? frame;
@@ -137,6 +140,7 @@ public sealed class VideoSource
 
         var packet = new VideoPacket
         {
+            CameraDisplayName = new string((DisplayName?.Invoke() ?? "").Where(c => !char.IsControl(c)).Take(60).ToArray()),
             Session = session,
             Sequence = sequence,
             SentAt = DateTimeOffset.UtcNow,
@@ -190,6 +194,7 @@ public sealed class VideoClient : IAsyncDisposable
                         long sequence = 0;
                         while (!token.IsCancellationRequested)
                         {
+                            long frameStarted = Stopwatch.GetTimestamp();
                             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(
                                 token
                             );
@@ -199,7 +204,9 @@ public sealed class VideoClient : IAsyncDisposable
                                 source.Get(session, ++sequence),
                                 timeout.Token
                             );
-                            await Task.Delay(200, token); // At most 5 fps, reuse the camera JPEG without another AI pass.
+                            // 전송 시간을 포함해 약 30FPS로 제한합니다. 느린 연결에서는 최신 프레임만 보냅니다.
+                            var remaining = TimeSpan.FromSeconds(1.0 / 30) - Stopwatch.GetElapsedTime(frameStarted);
+                            if (remaining > TimeSpan.Zero) await Task.Delay(remaining, token);
                         }
                     }
                     catch (OperationCanceledException) when (token.IsCancellationRequested)

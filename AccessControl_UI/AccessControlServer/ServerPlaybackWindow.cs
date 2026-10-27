@@ -1,4 +1,4 @@
-// 파일 역할: 서버 타임라인 재생 창과 클립 요청 창입니다. 추출 결과는 스크롤 영역, 폴더 버튼은 하단에 배치합니다.
+﻿// 파일 역할: 서버 타임라인 재생 창과 클립 요청 창입니다. 추출 결과는 스크롤 영역, 폴더 버튼은 하단에 배치합니다.
 // 기능 기준: 12.3 정상 동작 버전. 코드 설명과 서식을 정리한 소스입니다.
 
 using System.IO;
@@ -36,7 +36,9 @@ public sealed class ServerPlaybackWindow : Window
         var clip = new Wpf.Ui.Controls.Button
         {
             Content = "선택 시각 클립 요청",
-            Margin = new Thickness(8),
+            Margin = new Thickness(0, 0, 8, 0),
+            FontSize = 13,
+            Height = 34,
             HorizontalAlignment = HorizontalAlignment.Left
         };
         clip.Click += (_, _) =>
@@ -49,7 +51,10 @@ public sealed class ServerPlaybackWindow : Window
             {
                 Owner = this
             }.Show();
-        tools.Children.Add(clip);
+        playback.AuxiliaryActions.Children.Add(clip);
+        var segments = new Wpf.Ui.Controls.Button { Content = "녹화 상태 점검", Height = 34, FontSize = 13, Margin = new Thickness(0) };
+        segments.Click += (_, _) => new RecordingsWindow(database) { Owner = this }.Show();
+        playback.AuxiliaryActions.Children.Add(segments);
         tools.Children.Add(playback);
         root.Children.Add(playback.Screen);
         Closed += (_, _) => playback.Dispose();
@@ -115,8 +120,8 @@ public sealed class ServerClipWindow : Window
         root.Children.Add(date);
         if (!RecordingTimeline.TryTime(initialDate, initialTime, out var at))
             at = RecordingTimeline.LocalMidnight(initialDate);
-        start.Text = at.LocalDateTime.ToString("HH:mm:ss.fff");
-        end.Text = at.AddSeconds(5).LocalDateTime.ToString("HH:mm:ss.fff");
+        start.Text = at.LocalDateTime.ToString("HH:mm:ss");
+        end.Text = at.AddSeconds(5).LocalDateTime.ToString("HH:mm:ss");
         var times = new WrapPanel { Margin = new Thickness(0, 12, 0, 12) };
         times.Children.Add(new TextBlock { Text = "시작  " });
         times.Children.Add(start);
@@ -166,7 +171,7 @@ public sealed class ServerClipWindow : Window
                 || !RecordingTimeline.TryTime(selected, end.Text, out var to)
             )
             {
-                status.Text = "시각 형식: HH:mm:ss 또는 HH:mm:ss.fff";
+                status.Text = "시각 형식: HH:mm:ss";
                 return;
             }
 

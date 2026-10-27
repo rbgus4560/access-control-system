@@ -1,4 +1,4 @@
-// 파일 역할: 날짜·시각·구간 선택과 재생 상태를 관리합니다. 필요하면 클라이언트 원본을 서버 캐시에 요청합니다.
+﻿// 파일 역할: 날짜·시각·구간 선택과 재생 상태를 관리합니다. 필요하면 클라이언트 원본을 서버 캐시에 요청합니다.
 // 기능 기준: 12.3 정상 동작 버전. 코드 설명과 서식을 정리한 소스입니다.
 
 using System.IO;
@@ -15,23 +15,26 @@ public sealed class PlaybackPanel : UserControl, IDisposable
     private sealed record SegmentChoice(RecordingEntry Entry)
     {
         public override string ToString() =>
-            $"{Entry.StartTime.ToLocalTime():HH:mm:ss.fff} ~ {Entry.EndTime!.Value.ToLocalTime():HH:mm:ss.fff}";
+            $"{Entry.StartTime.ToLocalTime():HH:mm:ss} ~ {Entry.EndTime!.Value.ToLocalTime():HH:mm:ss}";
     }
 
     private readonly DatePicker date = new()
     {
         SelectedDate = DateTime.Today,
-        Width = 125,
+        Width = 155,
+        SelectedDateFormat = DatePickerFormat.Short,
         Margin = new Thickness(3)
     };
     private readonly TextBox time = new()
     {
         Text = "00:00:00",
-        Width = 100,
+        Width = 80,
+        TextAlignment = TextAlignment.Center,
+        HorizontalContentAlignment = HorizontalAlignment.Center,
         Margin = new Thickness(3),
         VerticalContentAlignment = VerticalAlignment.Center
     };
-    private readonly ComboBox segments = new() { Width = 270, Margin = new Thickness(3) };
+    private readonly ComboBox segments = new() { Width = 190, Margin = new Thickness(3), HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center };
     private readonly TextBlock status = new()
     {
         Text = "완료된 녹화 구간 조회 중",
@@ -75,58 +78,74 @@ public sealed class PlaybackPanel : UserControl, IDisposable
     public string SelectedTime => time.Text;
     public Guid? SelectedEventId { get; private set; }
 
+    public StackPanel AuxiliaryActions { get; } = new() { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+
     public event Action? ModeChanged;
     public Grid Screen { get; } =
         new() { Background = new SolidColorBrush(Color.FromRgb(22, 34, 44)) };
 
     public PlaybackPanel(bool compact = false, bool autoLoad = true, bool includeLive = true)
     {
+        FontSize = 13;
+        var segmentStyle = new Style(typeof(ComboBoxItem));
+        segmentStyle.Setters.Add(new Setter(HorizontalContentAlignmentProperty, HorizontalAlignment.Center));
+        segmentStyle.Setters.Add(new Setter(PaddingProperty, new Thickness(8, 5, 8, 5)));
+        segmentStyle.Setters.Add(new Setter(MarginProperty, new Thickness(0, 0, 2, 0)));
+        segments.ItemContainerStyle = segmentStyle;
         var root = new StackPanel { Margin = new Thickness(12, 4, 12, 4) };
         Content = root;
-        var row = new WrapPanel();
+        var row = new WrapPanel { Margin = new Thickness(0, 4, 0, 4) };
         root.Children.Add(row);
-        row.Children.Add(
-            new TextBlock
-            {
-                Text = "녹화 타임라인",
-                FontWeight = FontWeights.Bold,
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(4)
-            }
-        );
-        row.Children.Add(date);
-        load = Button("구간 조회", async () => await Reload());
-        row.Children.Add(load);
-        row.Children.Add(segments);
-        row.Children.Add(Button("선택 구간 재생", PlaySelected));
-        row.Children.Add(time);
-        row.Children.Add(Button("시각 재생", PlayTime));
+        date.Height = time.Height = segments.Height = 32;
+        time.BorderThickness = new Thickness(0);
+        time.Padding = new Thickness(4, 0, 4, 0);
+        segments.SetResourceReference(TemplateProperty, "StudioDropDownTemplate");
+        segments.Background = Brushes.White;
+        segments.BorderThickness = new Thickness(0);
+        date.VerticalAlignment = time.VerticalAlignment = segments.VerticalAlignment = VerticalAlignment.Center;
+        date.Margin = time.Margin = segments.Margin = new Thickness(0, 0, 6, 0);
+        StackPanel Group(string label)
+        {
+            var group = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0) };
+            group.Children.Add(new TextBlock { Text = label, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 8, 0) });
+            row.Children.Add(new Border { Child = group, Background = Brushes.White, BorderBrush = new SolidColorBrush(Color.FromRgb(224, 231, 241)), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(6), Padding = new Thickness(8, 4, 4, 4), Margin = new Thickness(0, 0, 10, 6) });
+            return group;
+        }
+        var dateGroup = Group("날짜");
+        dateGroup.Children.Add(date);
+        load = Button("조회", async () => await Reload());
+        dateGroup.Children.Add(load);
+        var segmentGroup = Group("구간");
+        segmentGroup.Children.Add(segments);
+        segmentGroup.Children.Add(Button("재생", PlaySelected));
+        var timeGroup = Group("시각");
+        timeGroup.Children.Add(time);
+        timeGroup.Children.Add(Button("재생", PlayTime));
         var controls = new WrapPanel();
-        root.Children.Add(controls);
+        var controlRow = new Grid { Margin = new Thickness(0, 0, 0, 4) };
+        controlRow.ColumnDefinitions.Add(new ColumnDefinition());
+        controlRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        controlRow.Children.Add(controls);
+        Grid.SetColumn(AuxiliaryActions, 1);
+        controlRow.Children.Add(AuxiliaryActions);
+        root.Children.Add(controlRow);
         pause = Button("일시정지", TogglePause);
         pause.IsEnabled = false;
         controls.Children.Add(pause);
         controls.Children.Add(Button("다음 구간", PlayNext));
         if (includeLive)
             controls.Children.Add(Button("LIVE 복귀", GoLive));
+        controls.Children.Add(new TextBlock { Text = "보기", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(14, 0, 8, 0) });
         controls.Children.Add(Button("24시간", () => bar.Zoom(86400)));
         controls.Children.Add(Button("1시간", () => bar.Zoom(3600)));
         controls.Children.Add(Button("10분", () => bar.Zoom(600)));
-        controls.Children.Add(
-            new TextBlock
-            {
-                Text = "파랑: 완료 녹화 / 빈 곳: 녹화 없음",
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(8, 0, 0, 0)
-            }
-        );
         if (compact)
         {
             root.Children.Remove(row);
-            root.Children.Remove(controls);
+            root.Children.Remove(controlRow);
             var tools = new StackPanel();
             tools.Children.Add(row);
-            tools.Children.Add(controls);
+            tools.Children.Add(controlRow);
             root.Children.Add(
                 new Expander
                 {
@@ -139,7 +158,7 @@ public sealed class PlaybackPanel : UserControl, IDisposable
         }
 
         root.Children.Add(bar);
-        root.Children.Add(status);
+        // 하단 중복 안내는 표시하지 않고 재생 중 상태는 영상 영역에서 알립니다.
         Screen.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         Screen.RowDefinitions.Add(new RowDefinition());
         Screen.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
@@ -172,7 +191,7 @@ public sealed class PlaybackPanel : UserControl, IDisposable
             if (segments.SelectedItem is SegmentChoice choice)
             {
                 var at = choice.Entry.StartTime < day!.Start ? day.Start : choice.Entry.StartTime;
-                time.Text = at.ToLocalTime().ToString("HH:mm:ss.fff");
+                time.Text = at.ToLocalTime().ToString("HH:mm:ss");
                 bar.Follow((at - day.Start).TotalSeconds);
             }
         };
@@ -190,9 +209,13 @@ public sealed class PlaybackPanel : UserControl, IDisposable
         var b = new Wpf.Ui.Controls.Button
         {
             Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary,
+            FontSize = 13,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
             Content = title,
-            Padding = new Thickness(9, 4, 9, 4),
-            Margin = new Thickness(3)
+            Padding = new Thickness(10, 4, 10, 4),
+            Height = 34,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0, 0, 6, 0)
         };
         b.Click += (_, _) => action();
         return b;
@@ -263,7 +286,7 @@ public sealed class PlaybackPanel : UserControl, IDisposable
 
         if (!RecordingTimeline.TryTime(date.SelectedDate!.Value, time.Text, out var at))
         {
-            SetStatus("시각은 HH:mm:ss 또는 HH:mm:ss.fff 형식으로 입력하세요.");
+            SetStatus("시각은 HH:mm:ss 형식으로 입력하세요.");
             return;
         }
 
@@ -285,7 +308,7 @@ public sealed class PlaybackPanel : UserControl, IDisposable
         Active = true;
         ModeChanged?.Invoke();
         bar.Follow((at - day.Start).TotalSeconds);
-        time.Text = at.ToLocalTime().ToString("HH:mm:ss.fff");
+        time.Text = at.ToLocalTime().ToString("HH:mm:ss");
         current = RecordingTimeline.FindAt(day.Segments, at);
         if (current is null)
         {
@@ -487,7 +510,7 @@ public sealed class PlaybackPanel : UserControl, IDisposable
 
     private void SetTitle(DateTimeOffset at) =>
         screenTitle.Text =
-            $"PLAYBACK · {at.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}"
+            $"PLAYBACK · {at.ToLocalTime():yyyy-MM-dd HH:mm:ss}"
             + (eventContext.Length > 0 ? "\n" + eventContext : "");
 
     public async Task<EventPlaybackReply> OpenEventAsync(

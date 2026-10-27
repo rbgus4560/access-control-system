@@ -4,147 +4,101 @@
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     x:Class="FaceRecognition.MainWindow"
-    Title="Access Control · 12.4 · 구역 인증 클라이언트 · .NET 10"
+    Icon="Assets/camera.ico"
+    Title="Access Control · 클라이언트"
     Width="1360"
     Height="900"
     MinWidth="1040"
     MinHeight="760"
     Closing="WindowClosing"
+    PreviewMouseDown="DismissSettingsMenu"
+    PreviewKeyDown="DismissSettingsOnEscape"
     Background="{StaticResource StudioBackground}"
     Foreground="{StaticResource StudioInk}"
     FontFamily="Malgun Gothic"
     FontSize="13">
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="220"/>
-            <ColumnDefinition/>
-        </Grid.ColumnDefinitions>
-        <Border Background="White" BorderBrush="{StaticResource StudioLine}" BorderThickness="0,0,1,0">
-            <DockPanel Margin="18,24,18,18">
-                <StackPanel DockPanel.Dock="Top">
-                    <TextBlock Text="ACCESS CONTROL" FontSize="17" FontWeight="Bold"/>
-                    <TextBlock Text="구역 인증 클라이언트" Style="{StaticResource StudioCaption}" Margin="0,6,0,22"/>
-                    <RadioButton
-                        Style="{StaticResource FlatNavItem}"
-                        GroupName="MainNav"
-                        Click="ShowLive"
-                        IsChecked="True"
-                        x:Name="NavLive">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="Video24" FontSize="19" Margin="0,0,12,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="출입 인증" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </RadioButton>
-                    <TextBlock Text="등록 직원 전체 자동 식별" Style="{StaticResource StudioCaption}" Margin="4,20,0,10"/>
-                    <Separator/>
-                    <TextBlock Text="연결 상태" Style="{StaticResource StudioHeading}"/>
-                    <TextBlock x:Name="CameraConnection" Text="카메라 · 미연결" Margin="0,5" TextWrapping="Wrap"/>
-                    <TextBlock x:Name="ServerConnection" Text="서버 · 미연결" Margin="0,5" TextWrapping="Wrap"/>
-                    <TextBlock x:Name="AiConnection" Text="AI · 시작 대기" Margin="0,5" TextWrapping="Wrap"/>
-                    <TextBlock x:Name="GalleryConnection" Text="직원 기준 · 동기화 대기" Margin="0,5" TextWrapping="Wrap"/>
-                    <TextBlock Text="최근 인증" Style="{StaticResource StudioHeading}" Margin="0,24,0,8"/>
-                    <TextBlock Text="이번 실행의 DB 기록 · 선택 시 상세 창" Style="{StaticResource StudioCaption}" Margin="0,0,0,8"/>
-                </StackPanel>
-                <StackPanel DockPanel.Dock="Bottom">
-                    <RadioButton Style="{StaticResource FlatNavItem}" GroupName="MainNav" Click="ShowSettings">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="Settings24" FontSize="19" Margin="0,0,12,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="클라이언트 설정" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </RadioButton>
-                    <Separator/>
-                    <TextBlock Text="CLIENT / CAM-01" FontWeight="SemiBold"/>
-                    <TextBlock Text="직원·얼굴 등록과 영상 조회는 서버에서 진행합니다." Style="{StaticResource StudioCaption}" Margin="0,6,0,0"/>
-                </StackPanel>
-                <ListBox
-                    x:Name="RecentEvents"
-                    SelectionChanged="SelectRecentEvent"
-                    BorderThickness="0"
-                    Background="Transparent"
-                    ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding Display}" TextWrapping="Wrap" Margin="0,7" FontSize="12"/>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-            </DockPanel>
-        </Border>
-        <Grid Grid.Column="1" Margin="22,20">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
-            <Grid Margin="0,0,0,18">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <StackPanel>
-                    <TextBlock Text="출입 인증" FontSize="27" FontWeight="Bold"/>
-                    <TextBlock Text="CAM-01 · 출입구 카메라" Style="{StaticResource StudioCaption}" Margin="0,6,0,0"/>
-                </StackPanel>
-                <TextBlock
-                    x:Name="Clock"
-                    Grid.Column="1"
-                    VerticalAlignment="Center"
-                    Foreground="{StaticResource StudioMuted}" />
-            </Grid>
-            <Border
-                x:Name="AccessCard"
-                Grid.Row="1"
-                Style="{StaticResource StudioCard}"
-                Padding="20,16"
-                Margin="0,0,0,16">
-                <StackPanel>
-                    <TextBlock Text="ACCESS DECISION  /  서버 최종 판정" Style="{StaticResource StudioCaption}" Margin="0,0,0,6"/>
-                    <TextBlock
-                        x:Name="AccessStatus"
-                        Text="출입 판정 대기 · 서버 연결과 카메라를 준비하세요"
-                        FontSize="28"
-                        FontWeight="SemiBold"
-                        TextWrapping="Wrap" />
-                </StackPanel>
-            </Border>
-            <Border
-                Grid.Row="2"
-                Background="#142033"
-                BorderBrush="{StaticResource StudioLine}"
-                BorderThickness="1"
-                CornerRadius="12"
-                Padding="4"
-                ClipToBounds="True">
-                <ContentControl x:Name="AiHost"/>
-            </Border>
-            <Border Grid.Row="3" Style="{StaticResource StudioCard}" Padding="16,12" Margin="0,16,0,0">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <StackPanel>
-                        <TextBlock Text="자동 직원 기준" Style="{StaticResource StudioCaption}"/>
-                        <TextBlock
-                            x:Name="ReferenceSummary"
-                            Text="서버 연결 후 등록 직원 전체를 자동 동기화합니다."
-                            TextWrapping="Wrap"
-                            Margin="0,5,16,0" />
+        <Border Margin="18" Background="#142033" BorderBrush="{StaticResource StudioLine}" BorderThickness="1" CornerRadius="12" ClipToBounds="True">
+            <Grid Margin="12">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                <DockPanel Margin="6,0,6,8" LastChildFill="False">
+                    <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="LIVE CAMERA" Foreground="White" FontSize="12" VerticalAlignment="Center"/>
+
                     </StackPanel>
-                    <TextBlock
-                        x:Name="LiveIndicator"
-                        Grid.Column="1"
-                        Text="카메라 대기"
-                        VerticalAlignment="Center"
-                        FontWeight="SemiBold"
-                        Foreground="{StaticResource StudioAccent}" />
-                </Grid>
-            </Border>
-        </Grid>
+                    <Button x:Name="SettingsButton" DockPanel.Dock="Right" Click="OpenSettingsMenu" Width="32" Height="32" Foreground="White" Background="Transparent" BorderThickness="0" ToolTip="클라이언트 설정" ToolTipService.IsEnabled="False" MouseEnter="ShowInlineHint" MouseLeave="HideInlineHint" AutomationProperties.Name="클라이언트 설정 열기" Cursor="Hand">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="Transparent"><ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True"><Setter Property="Opacity" Value="0.7"/></Trigger>
+                                    <Trigger Property="IsKeyboardFocused" Value="True"><Setter Property="Opacity" Value="0.7"/></Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <ui:SymbolIcon Symbol="Settings24" FontSize="20"/>
+                    </Button>
+                    <ToggleButton x:Name="AnalysisButton" DockPanel.Dock="Right" Width="32" Height="32" Margin="0,0,8,0" Foreground="White" Cursor="Hand" ToolTip="분석 화면 켜기/끄기" ToolTipService.IsEnabled="False" MouseEnter="ShowInlineHint" MouseLeave="HideInlineHint" Click="ToggleAnalysis" AutomationProperties.Name="분석 화면 켜기 끄기">
+                        <ToggleButton.Template>
+                            <ControlTemplate TargetType="ToggleButton">
+                                <Border x:Name="SelectionBorder" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" CornerRadius="3">
+                                    <TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsChecked" Value="True"><Setter TargetName="SelectionBorder" Property="BorderBrush" Value="#94D9FF"/><Setter TargetName="SelectionBorder" Property="Background" Value="#223C56"/></Trigger>
+                                    <Trigger Property="IsMouseOver" Value="True"><Setter Property="Opacity" Value="0.7"/></Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </ToggleButton.Template>
+                    </ToggleButton>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                        <Border x:Name="CameraStatusIcon" Background="Transparent" Padding="6" ToolTipService.IsEnabled="False" MouseEnter="ShowInlineHint" MouseLeave="HideInlineHint" AutomationProperties.Name="카메라 연결 상태">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Video24" FontSize="18" Foreground="#D8E2EF" VerticalAlignment="Center"/>
+                                <Ellipse x:Name="CameraLight" Width="10" Height="10" Fill="#DC2626" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                        <Border x:Name="ServerStatusIcon" Background="Transparent" Padding="6" Margin="8,0,0,0" ToolTipService.IsEnabled="False" MouseEnter="ShowInlineHint" MouseLeave="HideInlineHint" AutomationProperties.Name="서버 연결 상태">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE968;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="#D8E2EF" VerticalAlignment="Center"/>
+                                <Ellipse x:Name="ServerLight" Width="10" Height="10" Fill="#DC2626" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </DockPanel>
+                <ContentControl x:Name="AiHost" Grid.Row="1"/>
+                <!-- 창 밖으로 뜨는 네이티브 팝업 대신 카메라 내부에 메뉴와 설명을 배치합니다. -->
+                <Border x:Name="SettingsMenu" Grid.Row="1" Panel.ZIndex="20" Visibility="Collapsed" HorizontalAlignment="Right" VerticalAlignment="Top" Background="#F8FAFC" BorderBrush="#D7DFEA" BorderThickness="1" CornerRadius="6" Padding="4" Width="172" Margin="0,0,6,0">
+                    <StackPanel>
+                        <Button Content="서버 연결" Tag="0" Click="OpenSettingsSection" Padding="12,9" HorizontalContentAlignment="Left" Margin="0,0,0,4"/>
+                        <Button Content="카메라·AI" Tag="1" Click="OpenSettingsSection" Padding="12,9" HorizontalContentAlignment="Left" Margin="0,0,0,4"/>
+                        <Button Content="녹화·보관" Tag="2" Click="OpenSettingsSection" Padding="12,9" HorizontalContentAlignment="Left"/>
+                    </StackPanel>
+                </Border>
+                <Border x:Name="InlineHint" Grid.Row="1" Panel.ZIndex="21" Visibility="Collapsed" IsHitTestVisible="False" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,6,0" MaxWidth="460" Background="#F8FAFC" CornerRadius="4" Padding="10,7">
+                    <TextBlock x:Name="InlineHintText" TextWrapping="Wrap" Foreground="#17283F" FontSize="12"/>
+                </Border>
+            </Grid>
+        </Border>
+        <!-- 기존 상태 바인딩과 인증 처리는 유지하되 중복 안내 영역은 주 화면에서 표시하지 않습니다. -->
+        <StackPanel Visibility="Collapsed">
+            <TextBlock x:Name="Clock"/>
+            <RadioButton x:Name="NavLive"/>
+            <TextBlock x:Name="CameraConnection"/>
+            <TextBlock x:Name="ServerConnection"/>
+            <TextBlock x:Name="AiConnection"/>
+            <TextBlock x:Name="GalleryConnection"/>
+            <TextBlock x:Name="ReferenceSummary"/>
+            <TextBlock x:Name="LiveIndicator"/>
+            <Border x:Name="AccessCard"><TextBlock x:Name="AccessStatus"/></Border>
+            <ListBox x:Name="RecentEvents" SelectionChanged="SelectRecentEvent"/>
+        </StackPanel>
         <Grid x:Name="AuxiliaryViews" Visibility="Collapsed">
             <StackPanel x:Name="ConnectionControls" Margin="8">
-                <TextBlock Text="최초 한 번 등록하면 다음 실행부터 자동 연결합니다. 카메라는 카메라·AI 탭에서 직접 시작하며, 카메라 시작 시 녹화도 시작됩니다." TextWrapping="Wrap" Margin="0,0,0,16"/>
+                <TextBlock Text="최초 한 번 등록하면 다음 실행부터 자동 연결합니다. 카메라는 카메라·AI 설정에서 직접 시작하며, 카메라 시작 시 녹화도 시작됩니다." TextWrapping="Wrap" Margin="0,0,0,16"/>
                 <TextBlock Text="서버에서 복사한 연결 코드"/>
                 <PasswordBox x:Name="PairingCode" Margin="0,8,0,8"/>
                 <ui:Button x:Name="ApplyPair" Content="연결 코드 적용" Click="ApplyPairing" Margin="0,0,0,16"/>
@@ -159,11 +113,12 @@
                         Appearance="Primary"
                         Click="ConnectServer"
                         HorizontalAlignment="Stretch"
-                        Margin="0,0,0,6" />
+                        Margin="0,0,10,8" />
                     <ui:Button
                         x:Name="TcpDisconnect"
                         Content="인증·영상 연결 종료"
                         Appearance="Secondary"
+                        Margin="0,0,0,8"
                         Click="DisconnectServer"
                         IsEnabled="False"
                         HorizontalAlignment="Stretch" />

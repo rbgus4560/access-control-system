@@ -4,7 +4,8 @@
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     x:Class="AccessControlServer.MainWindow"
-    Title="Access Control · 12.4 · 서버 관제 · .NET 10"
+    Icon="Assets/camera.ico"
+    Title="Access Control · 서버"
     Closing="WindowClosing"
     Width="1440"
     Height="940"
@@ -14,163 +15,182 @@
     Foreground="{StaticResource StudioInk}"
     FontFamily="Malgun Gothic"
     FontSize="13">
+    <Window.Resources>
+        <Style x:Key="BareIconButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value><ControlTemplate TargetType="Button">
+                    <Border Background="Transparent"><ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+                    <ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter Property="Opacity" Value="0.65"/></Trigger></ControlTemplate.Triggers>
+                </ControlTemplate></Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="ServerNavItem" TargetType="RadioButton" BasedOn="{StaticResource FlatNavItem}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Tag, ElementName=Sidebar}" Value="Collapsed">
+                    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="RadioButton">
+                        <Border Background="Transparent" Padding="8"><ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True"><Setter Property="Foreground" Value="#2563EB"/></Trigger>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter Property="Opacity" Value="0.65"/></Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate></Setter.Value></Setter>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="CameraListButton" TargetType="Button">
+            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button">
+                <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}"><ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center"/></Border>
+                <ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter Property="Opacity" Value="0.65"/></Trigger></ControlTemplate.Triggers>
+            </ControlTemplate></Setter.Value></Setter>
+        </Style>
+        <Style x:Key="NavGroup" TargetType="Expander">
+            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Expander">
+                <Border x:Name="GroupFrame" BorderBrush="Transparent" BorderThickness="1" CornerRadius="5" Background="Transparent" ClipToBounds="True">
+                    <StackPanel>
+                        <ToggleButton x:Name="GroupHeader" Background="Transparent" IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" BorderThickness="0">
+                            <ToggleButton.Template><ControlTemplate TargetType="ToggleButton"><Border Background="{TemplateBinding Background}" Padding="7,10"><ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/></Border></ControlTemplate></ToggleButton.Template>
+                            <ContentPresenter ContentSource="Header"/>
+                            <ToggleButton.Style><Style TargetType="ToggleButton"><Setter Property="HorizontalContentAlignment" Value="Stretch"/><Style.Triggers>
+                                <DataTrigger Binding="{Binding Tag, ElementName=Sidebar}" Value="Collapsed"><Setter Property="HorizontalContentAlignment" Value="Center"/></DataTrigger>
+                            </Style.Triggers></Style></ToggleButton.Style>
+                        </ToggleButton>
+                        <ContentPresenter x:Name="Items" ContentSource="Content" Visibility="Collapsed" Margin="0,3"/>
+                    </StackPanel>
+                </Border>
+                <ControlTemplate.Triggers><Trigger Property="IsExpanded" Value="True">
+                    <Setter TargetName="Items" Property="Visibility" Value="Visible"/>
+                    <Setter TargetName="GroupFrame" Property="BorderBrush" Value="#DCE3ED"/>
+                    <Setter TargetName="GroupFrame" Property="Background" Value="White"/>
+                    <Setter TargetName="GroupHeader" Property="Background" Value="#F0F3F8"/>
+                </Trigger></ControlTemplate.Triggers>
+            </ControlTemplate></Setter.Value></Setter>
+        </Style>
+    </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="220"/>
+            <ColumnDefinition x:Name="SidebarColumn" Width="220"/>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
-        <Border Background="White" BorderBrush="{StaticResource StudioLine}" BorderThickness="0,0,1,0">
-            <DockPanel Margin="18,24,18,18">
+        <Border x:Name="Sidebar" Background="White" BorderBrush="{StaticResource StudioLine}" BorderThickness="0,0,1,0">
+            <DockPanel x:Name="SidebarLayout" Margin="12,18,12,18">
                 <StackPanel DockPanel.Dock="Top">
-                    <TextBlock Text="ACCESS CONTROL" FontSize="17" FontWeight="Bold"/>
-                    <TextBlock Text="관리 서버" Style="{StaticResource StudioCaption}" Margin="0,6,0,22"/>
-                    <RadioButton
-                        Style="{StaticResource FlatNavItem}"
-                        GroupName="MainNav"
-                        Click="ShowMonitoring"
-                        IsChecked="True"
-                        x:Name="NavLive">
+                    <Grid Margin="0,0,0,8">
+                        <TextBlock Tag="SidebarLabel" Text="서버관제" FontSize="14" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,32,0"/>
+                        <Button x:Name="SidebarToggle" Style="{StaticResource BareIconButton}" Click="ToggleSidebar" Width="30" Height="30" HorizontalAlignment="Right" Background="Transparent" BorderThickness="0" Padding="4" ToolTip="메뉴 접기" AutomationProperties.Name="메뉴 접기">
+                            <Grid Width="16" Height="14">
+                                <Border BorderBrush="#526078" BorderThickness="1" CornerRadius="2"/>
+                                <Border Width="1" Background="#526078" HorizontalAlignment="Left" Margin="5,1,0,1"/>
+                            </Grid>
+                        </Button>
+                    </Grid>
+
+                    <Expander x:Name="CamerasMenu" Style="{StaticResource NavGroup}" IsExpanded="False" Expanded="AnimateMenu" Margin="0,4,0,0">
+                        <Expander.Header><StackPanel Orientation="Horizontal"><ui:SymbolIcon Tag="SidebarIcon" Symbol="Video24" FontSize="19" Margin="0,0,10,0"/><TextBlock Tag="SidebarLabel" Text="서버관제" FontWeight="SemiBold"/></StackPanel></Expander.Header>
+                        <StackPanel>
+                            <StackPanel x:Name="CameraList"/>
+                        </StackPanel>
+                    </Expander>
+                    <RadioButton x:Name="NavLive" Visibility="Collapsed"/>
+                    <Expander x:Name="EmployeesMenu" Style="{StaticResource NavGroup}" IsExpanded="False" Expanded="AnimateMenu" Margin="0,12,0,0">
+                        <Expander.Header><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE716;" FontFamily="Segoe MDL2 Assets" FontSize="19" Margin="0,0,10,0" Tag="SidebarIcon"/><TextBlock Tag="SidebarLabel" Text="직원 관리" FontWeight="SemiBold"/></StackPanel></Expander.Header>
+                        <StackPanel>                    <RadioButton Style="{StaticResource ServerNavItem}" GroupName="MainNav" AutomationProperties.Name="직원·출입 권한" Click="ShowEmployees">
                         <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="Video24" FontSize="19" Margin="0,0,12,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="실시간 관제" VerticalAlignment="Center"/>
+                            <ui:SymbolIcon Tag="SidebarIcon" Symbol="Person24" FontSize="19" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                            <TextBlock Tag="SidebarLabel" Text="직원·출입 권한" VerticalAlignment="Center"/>
                         </StackPanel>
                     </RadioButton>
-                    <TextBlock Text="직원 및 얼굴" Style="{StaticResource StudioCaption}" Margin="4,18,0,10"/>
-                    <RadioButton Style="{StaticResource FlatNavItem}" GroupName="MainNav" Click="ShowEmployees">
+                    <RadioButton Style="{StaticResource ServerNavItem}" GroupName="MainNav" AutomationProperties.Name="얼굴 등록" Click="ShowEnrollment">
                         <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="Person24" FontSize="19" Margin="0,0,12,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="직원·출입 권한" VerticalAlignment="Center"/>
+                            <ui:SymbolIcon Tag="SidebarIcon" Symbol="PersonAdd24" FontSize="19" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                            <TextBlock Tag="SidebarLabel" Text="얼굴 등록" VerticalAlignment="Center"/>
                         </StackPanel>
                     </RadioButton>
-                    <RadioButton Style="{StaticResource FlatNavItem}" GroupName="MainNav" Click="ShowEnrollment">
+                        </StackPanel>
+                    </Expander>
+                    <Expander x:Name="RecordsMenu" Style="{StaticResource NavGroup}" IsExpanded="False" Expanded="AnimateMenu" Margin="0,12,0,0">
+                        <Expander.Header><StackPanel Orientation="Horizontal"><ui:SymbolIcon Symbol="Folder24" FontSize="19" Margin="0,0,10,0" Tag="SidebarIcon"/><TextBlock Tag="SidebarLabel" Text="기록 및 영상" FontWeight="SemiBold"/></StackPanel></Expander.Header>
+                        <StackPanel>                    <RadioButton Style="{StaticResource ServerNavItem}" GroupName="MainNav" AutomationProperties.Name="출입 기록" Click="ShowHistory">
                         <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="PersonAdd24" FontSize="19" Margin="0,0,12,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="얼굴 등록" VerticalAlignment="Center"/>
+                            <ui:SymbolIcon Tag="SidebarIcon" Symbol="Document24" FontSize="19" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                            <TextBlock Tag="SidebarLabel" Text="출입 기록" VerticalAlignment="Center"/>
                         </StackPanel>
                     </RadioButton>
-                    <TextBlock Text="기록 및 영상" Style="{StaticResource StudioCaption}" Margin="4,18,0,10"/>
-                    <RadioButton Style="{StaticResource FlatNavItem}" GroupName="MainNav" Click="ShowHistory">
+                    <RadioButton Style="{StaticResource ServerNavItem}" GroupName="MainNav" AutomationProperties.Name="타임라인·클립" Click="ShowTimeline">
                         <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="Video24" FontSize="19" Margin="0,0,12,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="출입 기록" VerticalAlignment="Center"/>
+                            <ui:SymbolIcon Tag="SidebarIcon" Symbol="Video24" FontSize="19" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                            <TextBlock Tag="SidebarLabel" Text="영상 조회·클립" VerticalAlignment="Center"/>
                         </StackPanel>
                     </RadioButton>
-                    <RadioButton Style="{StaticResource FlatNavItem}" GroupName="MainNav" Click="ShowTimeline">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="Video24" FontSize="19" Margin="0,0,12,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="타임라인·클립" VerticalAlignment="Center"/>
                         </StackPanel>
-                    </RadioButton>
-                    <RadioButton Style="{StaticResource FlatNavItem}" GroupName="MainNav" Click="ShowRecordings">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="Video24" FontSize="19" Margin="0,0,12,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="녹화 구간 목록" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </RadioButton>
+                    </Expander>
                 </StackPanel>
                 <StackPanel DockPanel.Dock="Bottom" VerticalAlignment="Bottom">
-                    <RadioButton Style="{StaticResource FlatNavItem}" GroupName="MainNav" Click="ShowServerSettings">
+                    <RadioButton Style="{StaticResource ServerNavItem}" GroupName="MainNav" AutomationProperties.Name="서버 설정" Click="ShowServerSettings">
                         <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="Settings24" FontSize="19" Margin="0,0,12,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="서버 설정" VerticalAlignment="Center"/>
+                            <ui:SymbolIcon Tag="SidebarIcon" Symbol="Settings24" FontSize="19" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                            <TextBlock Tag="SidebarLabel" Text="서버 설정" VerticalAlignment="Center"/>
                         </StackPanel>
                     </RadioButton>
                     <Separator/>
-                    <TextBlock Text="SERVER / CAM-01" FontWeight="SemiBold"/>
-                    <TextBlock Text="직원·권한·최종 출입 판정 관리" Style="{StaticResource StudioCaption}" Margin="0,6,0,0"/>
                 </StackPanel>
                 <Border/>
             </DockPanel>
         </Border>
-        <Grid Grid.Column="1" Margin="22,20">
+        <Grid Grid.Column="1" Margin="12,10">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition/>
                 <RowDefinition Height="180"/>
             </Grid.RowDefinitions>
-            <Grid Margin="0,0,0,18">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <StackPanel>
-                    <TextBlock Text="실시간 관제" FontSize="27" FontWeight="Bold"/>
-                    <TextBlock
-                        x:Name="DashboardStatus"
-                        Text="서버 설정에서 DB와 수신 연결을 준비하세요."
-                        Style="{StaticResource StudioCaption}"
-                        Margin="0,6,0,0" />
-                    <WrapPanel Margin="0,14,0,0">
-                        <Border Background="White" BorderBrush="{StaticResource StudioLine}" BorderThickness="1" CornerRadius="8" Padding="12,8" Margin="0,0,8,0">
-                            <TextBlock x:Name="DbIndicator" Text="DB · 연결 필요" FontWeight="SemiBold"/>
-                        </Border>
-                        <Border Background="White" BorderBrush="{StaticResource StudioLine}" BorderThickness="1" CornerRadius="8" Padding="12,8" Margin="0,0,8,0">
-                            <TextBlock x:Name="TcpIndicator" Text="TCP · 수신 대기" FontWeight="SemiBold"/>
-                        </Border>
-                        <Border Background="White" BorderBrush="{StaticResource StudioLine}" BorderThickness="1" CornerRadius="8" Padding="12,8">
-                            <TextBlock x:Name="StreamIndicator" Text="영상 · 미연결" FontWeight="SemiBold"/>
-                        </Border>
-                    </WrapPanel>
-                </StackPanel>
-                <TextBlock
-                    x:Name="ServerClock"
-                    Grid.Column="1"
-                    VerticalAlignment="Center"
-                    FontSize="14"
-                    Foreground="{StaticResource StudioMuted}" />
-            </Grid>
-            <Grid Grid.Row="1" Margin="0,0,0,16">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition/>
-                    <ColumnDefinition Width="280"/>
-                </Grid.ColumnDefinitions>
-                <Border Background="#142033" CornerRadius="12" ClipToBounds="True" Margin="0,0,16,0">
-                    <Grid>
-                        <Image x:Name="ServerVideo" Stretch="Uniform"/>
-                        <StackPanel x:Name="VideoHint" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <ui:SymbolIcon Symbol="Video24" FontSize="42" Foreground="#8DABC9" HorizontalAlignment="Center"/>
-                            <TextBlock Text="카메라 영상 수신 대기" Foreground="#DCE5F3" FontSize="20" Margin="0,14,0,8"/>
-                            <TextBlock Text="① DB 연결  →  ② 클라이언트 연결  →  ③ 카메라 시작" Foreground="#9DAFCA" TextAlignment="Center" TextWrapping="Wrap"/>
+            <Border Background="#142033" Padding="8,2" Margin="0,0,0,0">
+                <Grid>
+                <TextBlock x:Name="PlacementHint" Text="카메라 선택 후 배치할 화면을 클릭하세요" Foreground="#A8B9CD" VerticalAlignment="Center" Margin="4,0,160,0" TextTrimming="CharacterEllipsis"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Border x:Name="DbStatusIcon" ToolTipService.IsEnabled="False" MouseEnter="ShowStatusHint" MouseLeave="HideStatusHint" Padding="8,5" Background="Transparent" AutomationProperties.Name="DB 연결 상태">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Database24" FontSize="18" Foreground="#D8E2EF"/>
+                            <Ellipse x:Name="DbLight" Width="8" Height="8" Fill="Firebrick" Margin="7,0,0,0"/>
                         </StackPanel>
-                        <Border Background="#D0142033" VerticalAlignment="Top" Padding="16,12">
-                            <TextBlock x:Name="VideoStatus" Text="CAM-01 · 영상 수신 대기" Foreground="White" TextWrapping="Wrap"/>
-                        </Border>
-                    </Grid>
+                    </Border>
+                    <Border x:Name="TcpStatusIcon" ToolTipService.IsEnabled="False" MouseEnter="ShowStatusHint" MouseLeave="HideStatusHint" Padding="8,5" Background="Transparent" AutomationProperties.Name="TCP IP 수신 상태">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE968;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="#D8E2EF"/>
+                            <Ellipse x:Name="TcpLight" Width="8" Height="8" Fill="Firebrick" Margin="7,0,0,0"/>
+                        </StackPanel>
+                    </Border>
+                    <Border x:Name="StreamStatusIcon" ToolTipService.IsEnabled="False" MouseEnter="ShowStatusHint" MouseLeave="HideStatusHint" Padding="8,5" Background="Transparent" AutomationProperties.Name="영상 수신 상태">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Video24" FontSize="18" Foreground="#D8E2EF"/>
+                            <Ellipse x:Name="StreamLight" Width="8" Height="8" Fill="Firebrick" Margin="7,0,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+                </Grid>
+            </Border>
+            <Grid Grid.Row="1" Margin="0,0,0,10">
+                <UniformGrid x:Name="CameraGrid" Rows="3" Columns="3"/>
+                <Border x:Name="StatusHint" Visibility="Collapsed" IsHitTestVisible="False" HorizontalAlignment="Right" VerticalAlignment="Top" MaxWidth="400" Margin="0,4,6,0" Background="#F8FAFC" Padding="10,7" CornerRadius="4">
+                    <TextBlock x:Name="StatusHintText" TextWrapping="Wrap" Foreground="#17283F"/>
                 </Border>
-                <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
-                    <StackPanel>
-                        <Border Style="{StaticResource StudioCard}" Padding="20" Margin="0,0,0,12">
-                            <StackPanel>
-                                <TextBlock Text="현재 출입 판정" Style="{StaticResource StudioHeading}"/>
-                                <TextBlock x:Name="DoorResult" Text="출입 판정 대기" FontSize="24" FontWeight="Bold" TextWrapping="Wrap"/>
-                                <TextBlock Text="등록 정보와 출입 권한을 서버에서 확인합니다." Style="{StaticResource StudioCaption}" Margin="0,12,0,0"/>
-                            </StackPanel>
-                        </Border>
-                        <Border Style="{StaticResource StudioCard}" Padding="18">
-                            <StackPanel>
-                                <TextBlock Text="인증 클라이언트" Style="{StaticResource StudioHeading}"/>
-                                <TextBlock Text="CAM-01 · 출입구 카메라" FontWeight="SemiBold"/>
-                                <TextBlock
-                                    x:Name="TcpClientStatus"
-                                    Text="클라이언트 미연결"
-                                    TextWrapping="Wrap"
-                                    Margin="0,10,0,0"
-                                    Foreground="{StaticResource StudioMuted}" />
-                                <Separator/>
-                                <TextBlock x:Name="LiveResult" Text="분석 결과 대기" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap"/>
-                                <Expander Header="분석 상세" Margin="0,12,0,0">
-                                    <TextBlock
-                                        x:Name="LiveSummary"
-                                        Text="아직 수신한 분석 결과가 없습니다."
-                                        Margin="0,10,0,0"
-                                        TextWrapping="Wrap"
-                                        Foreground="{StaticResource StudioMuted}" />
-                                </Expander>
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-                </ScrollViewer>
             </Grid>
+            <!-- 주 화면에서 숨긴 보조 상태는 기존 갱신 처리를 위해 유지합니다. -->
+            <StackPanel Visibility="Collapsed">
+                <TextBlock x:Name="ServerClock"/>
+                <TextBlock x:Name="DashboardStatus"/>
+                <TextBlock x:Name="DbIndicator"/>
+                <TextBlock x:Name="TcpIndicator"/>
+                <TextBlock x:Name="StreamIndicator"/>
+                <Image x:Name="ServerVideo"/>
+                <StackPanel x:Name="VideoHint"/>
+                <TextBlock x:Name="VideoStatus"/>
+                <TextBlock x:Name="DoorResult"/>
+                <TextBlock x:Name="TcpClientStatus"/>
+                <TextBlock x:Name="LiveResult"/>
+                <TextBlock x:Name="LiveSummary"/>
+            </StackPanel>
             <Border Grid.Row="2" Style="{StaticResource StudioCard}" Padding="16">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -180,7 +200,7 @@
                     <DockPanel Margin="0,0,0,8">
                         <ui:Button DockPanel.Dock="Right" Content="전체 기록" Appearance="Secondary" Click="ShowHistory" Padding="10,5"/>
                         <StackPanel>
-                            <TextBlock Text="최근 출입 기록" FontSize="16" FontWeight="SemiBold"/>
+
                             <TextBlock
                                 x:Name="RecentStatus"
                                 Text="DB 조회 또는 새 판정 수신 후 표시됩니다."
@@ -196,9 +216,9 @@
                         SelectionMode="Single"
                         SelectionChanged="OpenRecentDetail">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="시각" Binding="{Binding 시각}" Width="170"/>
-                            <DataGridTextColumn Header="이름" Binding="{Binding 이름}" Width="100"/>
-                            <DataGridTextColumn Header="결과" Binding="{Binding 결과}" Width="100"/>
+                            <DataGridTextColumn Header="시각" Binding="{Binding 시각}" Width="*"/>
+                            <DataGridTextColumn Header="이름" Binding="{Binding 이름}" Width="*"/>
+                            <DataGridTextColumn Header="결과" Binding="{Binding 결과}" Width="*"/>
                             <DataGridTextColumn Header="사유" Binding="{Binding 사유}" Width="*"/>
                         </DataGrid.Columns>
                     </DataGrid>
@@ -306,28 +326,20 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition/>
                 </Grid.RowDefinitions>
-                <DockPanel Margin="0,0,0,10">
-                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                        <ui:Button
-                            x:Name="HistoryRefresh"
-                            Content="기록 조회"
-                            Appearance="Secondary"
-                            Click="RefreshHistory"
-                            Margin="0,0,8,0" />
-                        <ui:Button
-                            x:Name="EventPlaybackButton"
-                            Content="선택 기록 영상"
-                            Icon="{ui:SymbolIcon Video24}"
-                            Appearance="Primary"
-                            Click="PlaySelectedEvent"
-                            Margin="0,0,8,0" />
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="0,0,0,10">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="기간" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <DatePicker x:Name="HistoryFrom" Width="155" Language="ko-KR" SelectedDateFormat="Short"/>
+                        <TextBlock Text=" ~ " VerticalAlignment="Center"/>
+                        <DatePicker x:Name="HistoryUntil" Width="155" Language="ko-KR" SelectedDateFormat="Short"/>
+                        <TextBlock Text="검색" VerticalAlignment="Center" Margin="12,0,6,0"/>
+                        <TextBox x:Name="HistorySearch" Width="180" Padding="6,4" VerticalContentAlignment="Center" AutomationProperties.Name="출입 기록 검색"/>
+                        <ui:Button x:Name="HistoryRefresh" Content="기록 조회" Appearance="Secondary" Click="RefreshHistory" Margin="8,0,6,0"/>
+                        <ui:Button x:Name="EventPlaybackButton" Content="선택 기록 영상" Icon="{ui:SymbolIcon Video24}" Appearance="Secondary" Click="PlaySelectedEvent" Margin="0,0,6,0"/>
                         <ui:Button Content="이벤트 상세" Appearance="Secondary" Click="ShowDetail"/>
+                        <TextBlock x:Name="HistoryStatus" Visibility="Collapsed"/>
                     </StackPanel>
-                    <StackPanel>
-                        <TextBlock Text="최근 출입 기록" FontSize="16" FontWeight="SemiBold"/>
-                        <TextBlock x:Name="HistoryStatus" Text="DB 조회 전" Style="{StaticResource StudioCaption}" Margin="0,4,0,0"/>
-                    </StackPanel>
-                </DockPanel>
+                </ScrollViewer>
                 <DataGrid x:Name="Events" Grid.Row="1" SelectionMode="Single" MouseDoubleClick="DoubleClickEvent"/>
             </Grid>
         </Grid>

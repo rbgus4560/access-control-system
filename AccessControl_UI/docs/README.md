@@ -1,8 +1,10 @@
-# 문서 목차
+﻿# 문서 목차
 
 현재 연결·화면 사용법은 12.4 안내, 얼굴 식별은 12.3 안내를 우선한다. 단계별 검증과 과거 배포 안내는 해당 버전의 기록이며, 모든 내용이 최신 실행 절차를 뜻하지는 않는다. 실행 명령은 별도 표시가 없으면 AccessControl_UI 프로젝트 루트에서 실행한다.
 
 ## 처음 읽을 문서
+
+- [2026년 10월 27일 파일 구조와 공통 테마 정리](refactor-20261027.md)
 
 - [프로젝트 구조와 핵심 기능](project-summary.md)
 - [개발 과정](development-history.md)
@@ -64,3 +66,5 @@
 - [아래 방향 등록 정체 개선과 적용 방법](fixes/GUIDED_DOWN_20261022_KO.md)
 
 - [등록 방향 애니메이션 시험 적용과 끄는 방법](guides/ENROLLMENT_ANIMATION_KO.md)
+
+- [실시간 영상 30 FPS 목표 조정](guides/LIVE_VIDEO_30FPS_KO.md)

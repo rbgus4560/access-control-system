@@ -18,6 +18,7 @@ public sealed class AiSettings
         );
     public string AiDirectory { get; set; } = FindAiDirectory();
     public string ModelHome { get; set; } = FindModelHome();
+    public string CameraDisplayName { get; set; } = "CAM-01 · 출입구";
     public int Camera { get; set; }
     public string Backend { get; set; } = "dshow";
     public bool ReverseYaw { get; set; }

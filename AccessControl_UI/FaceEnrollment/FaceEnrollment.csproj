@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
         <TargetFramework>net10.0-windows</TargetFramework>
@@ -8,6 +8,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
     <ItemGroup>
+        <Page Include="../Ui/StudioTheme.xaml" Link="Theme/StudioTheme.xaml"/>
         <Compile Include="../Network/*.cs" Link="Network/%(Filename)%(Extension)"/>
         <PackageReference Include="WPF-UI" Version="4.3.0"/>
         <Compile Include="../Shared/*.cs" Link="Shared/%(Filename)%(Extension)"/>

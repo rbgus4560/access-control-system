@@ -5,10 +5,10 @@
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     x:Class="AccessControlServer.EmployeesWindow"
     Title="직원·출입 권한 관리 · 서버"
-    Width="1120"
-    Height="760"
-    MinWidth="1000"
-    MinHeight="680"
+    Width="1200"
+    Height="840"
+    MinWidth="1080"
+    MinHeight="800"
     WindowStartupLocation="CenterOwner"
     FontFamily="Malgun Gothic"
     Background="{StaticResource StudioBackground}"
@@ -19,10 +19,10 @@
             <Setter Property="Margin" Value="0,4,8,4"/>
         </Style>
         <Style TargetType="TextBlock">
-            <Setter Property="Margin" Value="0,5"/>
+            <Setter Property="Margin" Value="0,3"/>
         </Style>
         <Style TargetType="TextBox">
-            <Setter Property="Padding" Value="6"/>
+            <Setter Property="Padding" Value="4"/>
         </Style>
     </Window.Resources>
     <Grid Margin="24">
@@ -34,21 +34,19 @@
         </Grid.RowDefinitions>
         <StackPanel>
             <TextBlock Text="직원·출입 권한 관리" FontSize="24" FontWeight="Bold"/>
-            <TextBlock x:Name="EndpointLabel"/>
-            <TextBlock Text="직원을 선택해 기본 정보와 출입 권한을 수정하세요. 얼굴 등록은 서버의 얼굴 등록 메뉴에서 진행합니다." TextWrapping="Wrap"/>
+            <TextBlock x:Name="EndpointLabel" Visibility="Collapsed"/>
         </StackPanel>
         <Border Grid.Row="1" Style="{StaticResource StudioCard}" Padding="14,10" Margin="0,12,0,16">
         <StackPanel x:Name="SearchArea" Orientation="Horizontal">
             <TextBlock Text="직원 검색" VerticalAlignment="Center" Margin="0,0,12,0"/>
             <TextBox x:Name="SearchInput" Width="300" Margin="0,0,12,0" ToolTip="사원번호 또는 이름"/>
-            <ui:Button Appearance="Secondary" Content="검색·새로고침" Click="Search"/>
-            <ui:Button Appearance="Secondary" Content="신규 직원" Click="NewEmployee"/>
+            <ui:Button Appearance="Secondary" Content="검색·새로고침" Click="Search" Margin="0,0,8,0"/>
         </StackPanel>
         </Border>
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="310"/>
+                <ColumnDefinition Width="320"/>
             </Grid.ColumnDefinitions>
             <DataGrid
                 x:Name="Employees"
@@ -56,15 +54,16 @@
                 AutoGenerateColumns="False"
                 IsReadOnly="True"
                 CanUserAddRows="False"
+                ScrollViewer.HorizontalScrollBarVisibility="Auto"
                 SelectionMode="Single"
                 SelectionChanged="SelectEmployee">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="사원번호" Binding="{Binding EmployeeNo}" Width="110"/>
+                    <DataGridTextColumn Header="사원번호" Binding="{Binding EmployeeNo}" Width="*"/>
                     <DataGridTextColumn Header="이름" Binding="{Binding Name}" Width="*"/>
-                    <DataGridTextColumn Header="부서" Binding="{Binding Department}" Width="90"/>
-                    <DataGridTextColumn Header="직급" Binding="{Binding Position}" Width="75"/>
-                    <DataGridCheckBoxColumn Header="활성" Binding="{Binding IsActive}" Width="50"/>
-                    <DataGridCheckBoxColumn Header="출입 허용" Binding="{Binding AccessEnabled}" Width="70"/>
+                    <DataGridTextColumn Header="부서" Binding="{Binding Department}" Width="*"/>
+                    <DataGridTextColumn Header="직급" Binding="{Binding Position}" Width="*"/>
+                    <DataGridCheckBoxColumn Header="활성" Binding="{Binding IsActive}" Width="*"/>
+                    <DataGridCheckBoxColumn Header="출입 허용" Binding="{Binding AccessEnabled}" Width="*"/>
                 </DataGrid.Columns>
             </DataGrid>
             <Border Grid.Column="1" Style="{StaticResource StudioCard}" Padding="18">
@@ -84,20 +83,24 @@
                     <TextBox x:Name="DepartmentInput" MaxLength="100"/>
                     <TextBlock Text="직급 선택"/>
                     <TextBox x:Name="PositionInput" MaxLength="100"/>
-                    <CheckBox x:Name="ActiveInput" Content="활성 직원" IsChecked="True" Margin="0,18,0,10"/>
+                    <CheckBox x:Name="ActiveInput" Content="활성 직원" IsChecked="True" Margin="0,10,0,6"/>
                     <CheckBox x:Name="AccessInput" Content="출입 허용" IsChecked="False" Margin="0,0,0,10"/>
-                    <TextBlock Text="등록 얼굴이 있으면 식별한 뒤 서버가 활성 상태와 출입 권한을 확인합니다. 출입 불허 직원은 식별돼도 거부됩니다." TextWrapping="Wrap"/>
+
                 </StackPanel>
             </ScrollViewer>
             <StackPanel Grid.Row="1" Margin="0,12,0,0">
+                <TextBlock x:Name="DeletionLabel" Visibility="Collapsed" Foreground="#B45309" TextWrapping="Wrap" Margin="0,6,0,8"/>
                 <ui:Button Appearance="Primary" x:Name="SaveButton" Content="신규 직원 저장" Click="SaveEmployee" HorizontalAlignment="Stretch"/>
-                <TextBlock x:Name="UpdatedLabel" TextWrapping="Wrap"/>
+                <ui:Button x:Name="RestoreButton" Content="정보 복원" Click="RestoreEmployee" Visibility="Collapsed" HorizontalAlignment="Stretch" Margin="0,8,0,0"/>
+                <ui:Button x:Name="DeleteButton" Content="직원 삭제" Click="DeleteEmployee" IsEnabled="False" HorizontalAlignment="Stretch" Margin="0,8,0,0"/>
+                <TextBlock x:Name="UpdatedLabel" Visibility="Collapsed"/>
             </StackPanel>
             </Grid>
             </Border>
         </Grid>
         <TextBlock
             x:Name="StatusLabel"
+            Visibility="Collapsed"
             Grid.Row="3"
             Text="서버의 DB 연결을 사용합니다. 직원 목록을 불러오는 중입니다."
             TextWrapping="Wrap"

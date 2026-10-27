@@ -17,15 +17,18 @@ public sealed record EmployeeRow(
     bool IsActive,
     bool AccessEnabled,
     DateTime CreatedAt,
-    DateTime UpdatedAt
+    DateTime UpdatedAt,
+    DateTime? DeletedAt = null,
+    DateTime? DeleteAfter = null,
+    DateTime? PurgedAt = null
 );
 
 public static class EmployeeService
 {
     private const string Columns =
-        "person_id,employee_no,name,department,position,is_active,access_enabled,created_at,updated_at";
+        "person_id,employee_no,name,department,position,is_active,access_enabled,created_at,updated_at,(to_jsonb(p)->>'deleted_at')::timestamptz,(to_jsonb(p)->>'delete_after')::timestamptz,(to_jsonb(p)->>'purged_at')::timestamptz";
 
-    private static NpgsqlConnection Connection(DatabaseEndpoint endpoint, string password) =>
+    internal static NpgsqlConnection Connection(DatabaseEndpoint endpoint, string password) =>
         new(
             new NpgsqlConnectionStringBuilder
             {
@@ -52,23 +55,28 @@ public static class EmployeeService
             r.GetBoolean(5),
             r.GetBoolean(6),
             r.GetDateTime(7),
-            r.GetDateTime(8)
+            r.GetDateTime(8),
+            r.IsDBNull(9) ? null : r.GetDateTime(9),
+            r.IsDBNull(10) ? null : r.GetDateTime(10),
+            r.IsDBNull(11) ? null : r.GetDateTime(11)
         );
 
     public static async Task<List<EmployeeRow>> ListAsync(
         DatabaseEndpoint endpoint,
         string password,
         string search,
-        CancellationToken token
+        CancellationToken token,
+        bool includeDeleted = false
     )
     {
         await using var conn = Connection(endpoint, password);
         await conn.OpenAsync(token);
         // Literal substring matching: %, _ and quotes in search text are not interpreted as SQL.
         await using var cmd = new NpgsqlCommand(
-            $"SELECT {Columns} FROM access_control.persons WHERE @search='' OR strpos(lower(employee_no),lower(@search))>0 OR strpos(lower(name),lower(@search))>0 ORDER BY employee_no LIMIT 500",
+            $"SELECT {Columns} FROM access_control.persons p WHERE (to_jsonb(p)->>'purged_at') IS NULL AND (@include_deleted OR (to_jsonb(p)->>'deleted_at') IS NULL) AND (@search='' OR strpos(lower(employee_no),lower(@search))>0 OR strpos(lower(name),lower(@search))>0) ORDER BY employee_no LIMIT 500",
             conn
         );
+        cmd.Parameters.AddWithValue("include_deleted", includeDeleted);
         cmd.Parameters.AddWithValue("search", NpgsqlDbType.Text, search.Trim());
         await using var reader = await cmd.ExecuteReaderAsync(token);
         var rows = new List<EmployeeRow>();
@@ -94,8 +102,8 @@ public static class EmployeeService
         await conn.OpenAsync(token);
         var sql =
             original == null
-                ? $"INSERT INTO access_control.persons(employee_no,name,department,position,is_active,access_enabled) VALUES (@no,@name,@dept,@position,@active,@access) RETURNING {Columns}"
-                : $"UPDATE access_control.persons SET employee_no=@no,name=@name,department=@dept,position=@position,is_active=@active,access_enabled=@access WHERE person_id=@id AND updated_at=@version RETURNING {Columns}";
+                ? $"INSERT INTO access_control.persons AS p(employee_no,name,department,position,is_active,access_enabled) VALUES (@no,@name,@dept,@position,@active,@access) RETURNING {Columns}"
+                : $"UPDATE access_control.persons p SET employee_no=@no,name=@name,department=@dept,position=@position,is_active=@active,access_enabled=@access WHERE person_id=@id AND updated_at=@version AND (to_jsonb(p)->>'deleted_at') IS NULL RETURNING {Columns}";
         await using var cmd = new NpgsqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("no", NpgsqlDbType.Text, employeeNo.Trim());
         cmd.Parameters.AddWithValue("name", NpgsqlDbType.Text, name.Trim());
@@ -124,6 +132,9 @@ public static class EmployeeService
             );
         return Read(reader);
     }
+
+    public static Task DeleteAsync(DatabaseEndpoint endpoint, string password, EmployeeRow original, CancellationToken token) =>
+        EmployeeDeletionService.ChangeAsync(endpoint, password, original, "schedule", token);
 
     private static string? NullIfBlank(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();

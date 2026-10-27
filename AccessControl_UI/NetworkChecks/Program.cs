@@ -10,6 +10,12 @@ using AccessControl.Ai;
 using AccessControl.Network;
 using FaceRecognition;
 
+if (args.Contains("--video-metadata-only"))
+{
+    await VideoChecks.Run();
+    return;
+}
+
 static void Check(bool value, string description)
 {
     if (!value)

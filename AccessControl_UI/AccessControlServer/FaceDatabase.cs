@@ -138,7 +138,7 @@ public sealed partial class FaceDatabase
     {
         await using var connection = await OpenAsync(token);
         await using var cmd = new NpgsqlCommand(
-            "SELECT p.person_id,p.employee_no,p.name,p.is_active,p.access_enabled,e.enrollment_id FROM access_control.persons p LEFT JOIN access_control.face_enrollments e ON e.person_id=p.person_id AND e.is_active ORDER BY p.employee_no LIMIT 500",
+            "SELECT p.person_id,p.employee_no,p.name,p.is_active,p.access_enabled,e.enrollment_id FROM access_control.persons p LEFT JOIN access_control.face_enrollments e ON e.person_id=p.person_id AND e.is_active WHERE (to_jsonb(p)->>'deleted_at') IS NULL ORDER BY p.employee_no LIMIT 500",
             connection
         );
         await using var reader = await cmd.ExecuteReaderAsync(token);
@@ -185,7 +185,7 @@ public sealed partial class FaceDatabase
         bool active;
         await using (
             var cmd = new NpgsqlCommand(
-                "SELECT employee_no,name,is_active FROM access_control.persons WHERE person_id=@id FOR UPDATE",
+                "SELECT employee_no,name,is_active FROM access_control.persons WHERE person_id=@id AND (to_jsonb(persons)->>'deleted_at') IS NULL FOR UPDATE",
                 connection,
                 transaction
             )

@@ -175,6 +175,8 @@ def main():
             )
         camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
         camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+        # 장치가 지원할 때만 적용됩니다. 실측 FPS 보장값은 아닙니다.
+        camera.set(cv2.CAP_PROP_FPS, 30)
         if args.role == "recognition" and args.record_root:
             try:
                 from segment_recorder import SegmentRecorder
@@ -257,7 +259,7 @@ def main():
                     import base64
 
                     emit({"type": "live", "jpeg": base64.b64encode(jpg).decode("ascii")})
-                next_video = now + 1 / 25
+                next_video = now + 1 / 30
             while True:
                 try:
                     item = results.get_nowait()

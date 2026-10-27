@@ -1,4 +1,4 @@
-// 파일 역할: 관리 서버의 목록·설정 패널을 별도 창으로 옮겼다가 닫을 때 돌려주는 공통 창입니다.
+﻿// 파일 역할: 관리 서버의 목록·설정 패널을 별도 창으로 옮겼다가 닫을 때 돌려주는 공통 창입니다.
 // 기능 기준: 12.3 정상 동작 버전. 코드 설명과 서식을 정리한 소스입니다.
 
 using System.Windows;
@@ -36,7 +36,7 @@ public sealed class ServerToolWindow : Window
             Margin = new Thickness(0, 6, 0, 0)
         };
         caption.SetResourceReference(TextBlock.ForegroundProperty, "StudioMuted");
-        header.Children.Add(caption);
+        if (!string.IsNullOrWhiteSpace(description)) header.Children.Add(caption);
         DockPanel.SetDock(header, Dock.Top);
         root.Children.Add(header);
         var host = new ContentControl { Content = view };

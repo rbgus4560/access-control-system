@@ -1,4 +1,4 @@
-// 파일 역할: 관리 서버의 DB 연결·TCP 수신·관제 화면을 조정합니다. 클라이언트 관측을 DB 권한 판정과 연결합니다.
+﻿// 파일 역할: 관리 서버의 DB 연결·TCP 수신·관제 화면을 조정합니다. 클라이언트 관측을 DB 권한 판정과 연결합니다.
 // 기능 기준: 12.4. 서버 DB 세션 재사용과 선택형 자동 시작 및 관제 상태를 연결합니다.
 
 using System;
@@ -23,6 +23,8 @@ public partial class MainWindow : Window
     private readonly MonitorServer monitor = new();
     private readonly VideoServer videoServer = new();
     private ReceivedVideo? displayedVideo;
+    // 영상만 빠르게 갱신하고 대시보드·권한 상태 갱신은 기존 200ms 주기를 유지합니다.
+    private readonly DispatcherTimer videoClock = new() { Interval = TimeSpan.FromSeconds(1.0 / 30) };
     private readonly DispatcherTimer monitorClock = new()
     {
         Interval = TimeSpan.FromMilliseconds(200)
@@ -47,12 +49,24 @@ public partial class MainWindow : Window
     private ServerToolWindow? settingsWindow,
         historyWindow;
 
+    private bool sidebarCollapsed;
+    private readonly List<CameraTile> cameraTiles = new();
+
     public MainWindow()
     {
         InitializeComponent();
+        for (int index = 1; index <= 9; index++)
+        {
+            string code = $"CAM-{index:00}";
+            var tile = new CameraTile(code, index == 1 ? code + " · 출입구" : code + " · 미연결");
+            cameraTiles.Add(tile);
+            CameraGrid.Children.Add(tile);
+        }
+        InitializeCameraWorkspace();
+        Closed += (_, _) => { foreach (var tile in cameraTiles) tile.CloseExpanded(); };
         Activated += (_, _) => NavLive.IsChecked = true;
         AuxiliaryViews.Children.Clear();
-        Events.ItemsSource = rows;
+        InitializeHistoryFilters();
         rows.CollectionChanged += (_, _) => RefreshRecentPreview();
         RefreshRecentPreview();
         media = new MediaCoordinator(() => Volatile.Read(ref faceDatabase));
@@ -112,26 +126,16 @@ public partial class MainWindow : Window
         monitorClock.Tick += (_, _) =>
         {
             RefreshSnapshot();
-            RefreshVideo();
             RefreshDashboard();
         };
         monitorClock.Start();
+        videoClock.Tick += (_, _) => RefreshVideo();
+        videoClock.Start();
         Loaded += async (_, _) =>
         {
             if (preview)
             {
-                Window target = this;
-                if (Environment.GetCommandLineArgs().Contains("--employees-preview"))
-                {
-                    target = new EmployeesWindow(new("서버 설정에서 연결", 5432, "미연결", ""), "", () => false) { Owner = this };
-                    target.Show();
-                }
-                else if (Environment.GetCommandLineArgs().Contains("--settings-preview"))
-                {
-                    ShowServerSettings(this, new RoutedEventArgs());
-                    target = settingsWindow!;
-                }
-                AccessControl.Preview.UiPreviewCapture.Queue(target);
+                ShowPreview();
                 return;
             }
             faceRequests = FaceApiServer.ListenAsync(HandleFaceRequestAsync, lifetime.Token);
@@ -172,55 +176,6 @@ public partial class MainWindow : Window
                 Reason = "DB_NOT_CONNECTED",
                 AttemptId = packet.Snapshot?.AttemptId
             };
-    }
-
-    private void InsertHistory(AccessEventRow row)
-    {
-        if (rows.Any(r => r.이벤트ID == row.이벤트ID))
-            return;
-        int index = 0;
-        while (index < rows.Count && string.CompareOrdinal(rows[index].시각, row.시각) > 0)
-            index++;
-        rows.Insert(index, row);
-        while (rows.Count > 500)
-            rows.RemoveAt(rows.Count - 1);
-        HistoryStatus.Text = $"DB 출입 기록 {rows.Count}건 표시";
-    }
-
-    private async void RefreshHistory(object sender, RoutedEventArgs e)
-    {
-        var db = Volatile.Read(ref faceDatabase);
-        if (db is null)
-        {
-            HistoryStatus.Text = "서버 DB 연결을 먼저 해 주세요.";
-            return;
-        }
-
-        if (!HistoryRefresh.IsEnabled)
-            return;
-        HistoryRefresh.IsEnabled = false;
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
-        cts.CancelAfter(TimeSpan.FromSeconds(15));
-        try
-        {
-            var history = await db.EventsAsync(cts.Token);
-            if (closing || !ReferenceEquals(db, Volatile.Read(ref faceDatabase)))
-                return;
-            rows.Clear();
-            foreach (var row in history)
-                rows.Add(row);
-            HistoryStatus.Text = $"DB 최근 {rows.Count}건 조회";
-        }
-        catch (Exception)
-        {
-            if (!closing)
-                HistoryStatus.Text = "출입 기록 조회 실패 · DB 연결을 확인하세요.";
-        }
-        finally
-        {
-            if (!closing)
-                HistoryRefresh.IsEnabled = true;
-        }
     }
 
     private async Task ObserveFaceRequestsAsync()
@@ -350,6 +305,7 @@ public partial class MainWindow : Window
 
     private void RefreshVideo()
     {
+        if (preview && Environment.GetCommandLineArgs().Contains("--camera-placement-preview")) return;
         var frame = videoServer.Latest;
         if (
             frame is null
@@ -393,6 +349,9 @@ public partial class MainWindow : Window
             bitmap.EndInit();
             bitmap.Freeze();
             ServerVideo.Source = bitmap;
+            if (!string.IsNullOrWhiteSpace(frame.Packet.CameraDisplayName))
+                cameraDisplayLabel = frame.Packet.CameraDisplayName;
+            cameraSeen = true;
             VideoHint.Visibility = Visibility.Collapsed;
             VideoStatus.Text =
                 $"CAM-01 · 실시간 영상 · #{frame.Packet.Sequence} · {frame.Packet.SentAt.ToLocalTime():HH:mm:ss} · 최대 5fps";
@@ -492,6 +451,7 @@ public partial class MainWindow : Window
         e.Cancel = true;
         closing = true;
         monitorClock.Stop();
+        videoClock.Stop();
         lifetime.Cancel();
         settingsWindow?.Close();
         historyWindow?.Close();
@@ -524,181 +484,6 @@ public partial class MainWindow : Window
         lifetime.Dispose();
         // DisposeAsync가 즉시 끝나도 Closing 이벤트가 반환된 뒤 창을 닫아 재진입을 피합니다.
         _ = Dispatcher.BeginInvoke(new Action(Close));
-    }
-
-    private async void LoadDatabase(object sender, RoutedEventArgs e) => await ConnectDatabaseAsync();
-
-    private async Task ConnectDatabaseAsync()
-    {
-        if (request != null)
-            return;
-        if (
-            !int.TryParse(PortInput.Text, out int port)
-            || port < 1
-            || port > 65535
-            || string.IsNullOrWhiteSpace(HostInput.Text)
-            || string.IsNullOrWhiteSpace(DatabaseInput.Text)
-            || string.IsNullOrWhiteSpace(UsernameInput.Text)
-        )
-        {
-            MessageBox.Show("호스트·포트·DB 이름·계정을 확인해 주세요.");
-            return;
-        }
-
-        // 입력값을 한 번에 고정하고 기존 직원 창을 닫아 다른 DB의 오래된 편집을 차단합니다.
-        var endpoint = new DatabaseEndpoint(HostInput.Text.Trim(), port, DatabaseInput.Text.Trim(), UsernameInput.Text.Trim());
-        string password = PasswordInput.Password;
-        if (string.IsNullOrEmpty(password) && endpoint == connectedEndpoint)
-            password = connectedPassword;
-        employeesWindow?.Close();
-        connectedEndpoint = null;
-        connectedPassword = "";
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
-        cts.CancelAfter(TimeSpan.FromSeconds(20));
-        request = cts;
-        LoadButton.IsEnabled = false;
-        ConnectionFields.IsEnabled = false;
-        Clients.ItemsSource = null;
-        Cameras.ItemsSource = null;
-        DeviceCount.Text = "조회 중";
-        DbStatus.Text = "PostgreSQL · 연결 및 조회 중";
-        rows.Clear();
-        HistoryStatus.Text = "DB 조회 중";
-        current = null;
-        RefreshSnapshot();
-        Volatile.Write(ref faceDatabase, null);
-        FaceAdmins.ItemsSource = null;
-        FaceDbStatus.Text = "직원·얼굴 서비스 준비 중";
-        try
-        {
-            var snapshot = await DatabaseService.LoadAsync(
-                HostInput.Text.Trim(),
-                port,
-                DatabaseInput.Text.Trim(),
-                UsernameInput.Text.Trim(),
-                password,
-                cts.Token
-            );
-            var db = new FaceDatabase(
-                new DatabaseEndpoint(
-                    HostInput.Text.Trim(),
-                    port,
-                    DatabaseInput.Text.Trim(),
-                    UsernameInput.Text.Trim()
-                ),
-                password
-            );
-            var admins = await db.AdminsAsync(cts.Token);
-            var history = await db.EventsAsync(cts.Token);
-            if (closing || cts.IsCancellationRequested)
-                return;
-            Volatile.Write(ref faceDatabase, db);
-            connectedEndpoint = endpoint;
-            connectedPassword = password;
-            rows.Clear();
-            foreach (var row in history)
-                rows.Add(row);
-            HistoryStatus.Text = $"DB 최근 {rows.Count}건 조회";
-            FaceAdmins.ItemsSource = admins;
-            FaceAdmins.SelectedIndex = admins.Count > 0 ? 0 : -1;
-            FaceDbStatus.Text =
-                admins.Count == 0
-                    ? "얼굴 저장 전 관리자 추가를 한 번 진행해 주세요."
-                    : "직원·얼굴 요청 대기 중 · 서버 세션 사용 · 자동 연결 저장은 선택 설정에 따름";
-            Clients.ItemsSource = snapshot.Clients;
-            Cameras.ItemsSource = snapshot.Cameras;
-            DeviceCount.Text =
-                $"클라이언트 {snapshot.Clients.Count}개 / 카메라 {snapshot.Cameras.Count}개";
-            DbStatus.Text = $"조회 성공 · {snapshot.Database} · {DateTime.Now:HH:mm:ss}";
-            try
-            {
-                if (RememberConnection.IsChecked == true)
-                {
-                    int startupPort = int.TryParse(TcpPort.Text, out int configured) && configured is >= 1024 and <= 65533 ? configured : 5050;
-                    startupSettings.Save(new(endpoint, password, startupPort));
-                }
-                else startupSettings.Forget();
-            }
-            catch (Exception)
-            {
-                DbStatus.Text += " · 자동 연결 설정 저장 실패";
-            }
-            if (!tcpManuallyStopped) await StartTcpAsync();
-        }
-        catch (OperationCanceledException)
-        {
-            if (!closing)
-            {
-                DbStatus.Text = "조회 취소 또는 시간 초과 · 다시 시도하세요";
-                DeviceCount.Text = "조회 결과 없음";
-            }
-        }
-        catch (PostgresException ex)
-        {
-            if (!closing)
-            {
-                string hint = ex.SqlState switch
-                {
-                    "28P01" => "DB 비밀번호 또는 계정을 확인하세요.",
-                    "3D000" => "DB 이름을 확인하세요.",
-                    "42P01" or "3F000" =>
-                        "이 DB에 access_control 스키마와 테이블이 있는지 확인하세요.",
-                    "42501" => "계정의 스키마·테이블 조회 권한을 확인하세요.",
-                    _ => "DB 상태와 테이블 설정을 확인하세요."
-                };
-                DbStatus.Text = $"DB 조회 실패 [{ex.SqlState}] · {hint}";
-                DeviceCount.Text = "조회 결과 없음";
-            }
-        }
-        catch (Exception)
-        {
-            if (!closing)
-            {
-                DbStatus.Text =
-                    "DB 연결·조회 실패 · PostgreSQL 실행 상태와 접속 정보를 확인하세요.";
-                DeviceCount.Text = "조회 결과 없음";
-            }
-        }
-        finally
-        {
-            request = null;
-            if (!closing)
-            {
-                LoadButton.IsEnabled = true;
-                ConnectionFields.IsEnabled = true;
-                PasswordInput.Clear();
-            }
-        }
-    }
-
-    private EmployeesWindow? employeesWindow;
-
-    private async Task<FaceReply> HandleFaceRequestAsync(
-        FaceRequest request,
-        CancellationToken token
-    )
-    {
-        var db =
-            Volatile.Read(ref faceDatabase)
-            ?? throw new InvalidOperationException(
-                "서버에서 DB 연결 및 목록 조회를 먼저 해 주세요."
-            );
-        if (request.Operation != "open-employees")
-            return await db.HandleAsync(request, token);
-        token.ThrowIfCancellationRequested();
-        await Dispatcher.InvokeAsync(() =>
-        {
-            if (closing)
-                throw new InvalidOperationException("서버 종료 중입니다.");
-            ShowEmployees(this, new RoutedEventArgs());
-        });
-        return new FaceReply
-        {
-            RequestId = request.RequestId,
-            Success = true,
-            Message =
-                "서버의 직원·권한 관리 창을 열었습니다. 연결된 DB로 조회·수정할 수 있습니다."
-        };
     }
 
     private void ShowEmployees(object sender, RoutedEventArgs e)
@@ -767,259 +552,5 @@ public partial class MainWindow : Window
         }
     }
 
-    private void ShowDetail(object s, RoutedEventArgs e)
-    {
-        if (Events.SelectedItem is AccessEventRow row)
-            OpenDetail(row);
-        else
-            MessageBox.Show("조회할 이벤트를 선택해 주세요.");
-    }
 
-    private void OpenDetail(AccessEventRow row) =>
-        new AccessControl.Ui.EventDetailWindow(
-            row.시각,
-            row.이름 ?? "미확인",
-            row.사원번호 ?? "—",
-            row.결과,
-            row.사유,
-            row.거리,
-            row.이벤트ID,
-            "서버 DB에 저장된 출입 판정 기록입니다."
-        )
-        {
-            Owner = this
-        }.Show();
-
-    private void OpenRecentDetail(
-        object sender,
-        System.Windows.Controls.SelectionChangedEventArgs e
-    )
-    {
-        if (
-            closing
-            || e.AddedItems.Count == 0
-            || RecentPreview.SelectedItem is not AccessEventRow row
-        )
-            return;
-        OpenDetail(row);
-        RecentPreview.SelectedIndex = -1;
-    }
-
-    private void RefreshRecentPreview()
-    {
-        if (closing)
-            return;
-        RecentPreview.ItemsSource = rows.Take(5).ToList();
-        RecentStatus.Text =
-            rows.Count == 0
-                ? "표시할 기록 없음 · 서버 설정에서 DB 연결 후 조회하세요."
-                : $"최신 {Math.Min(5, rows.Count)}건 · 선택하면 상세 창이 열립니다.";
-    }
-
-    private void RefreshDashboard()
-    {
-        if (closing)
-            return;
-        ServerClock.Text = DateTime.Now.ToString("yyyy.MM.dd  HH:mm:ss");
-        DashboardStatus.Text =
-            (Volatile.Read(ref faceDatabase) is null ? "DB 미설정" : "DB 연결 설정 완료")
-            + "  ·  "
-            + (monitor.Running ? "TCP 수신 중" : "TCP 중지")
-            + "  ·  "
-            + (media.Connected ? "영상·클립 요청 채널 연결됨" : "영상·클립 요청 채널 대기");
-        DbIndicator.Text = faceDatabase is null ? "DB · 연결 필요" : "DB · 사용 준비";
-        DbIndicator.Foreground = faceDatabase is null ? System.Windows.Media.Brushes.SlateGray : System.Windows.Media.Brushes.SeaGreen;
-        TcpIndicator.Text = monitor.Running ? $"TCP · 수신 중 :{monitor.BoundPort}" : "TCP · 중지";
-        TcpIndicator.Foreground = monitor.Running ? System.Windows.Media.Brushes.SeaGreen : System.Windows.Media.Brushes.SlateGray;
-        bool videoFresh = displayedVideo is not null && Stopwatch.GetElapsedTime(displayedVideo.At) < TimeSpan.FromSeconds(3);
-        StreamIndicator.Text = videoFresh ? "영상 · 수신 중" : "영상 · 대기";
-    }
-
-    private void ShowMonitoring(object sender, RoutedEventArgs e) => RefreshDashboard();
-
-    private static void BringForward(Window window)
-    {
-        if (window.WindowState == WindowState.Minimized)
-            window.WindowState = WindowState.Normal;
-        window.Activate();
-    }
-
-    private void ShowServerSettings(object sender, RoutedEventArgs e)
-    {
-        if (settingsWindow is not null)
-        {
-            BringForward(settingsWindow);
-            return;
-        }
-
-        settingsWindow = new ServerToolWindow(
-            "서버 설정",
-            "DB·관리자와 클라이언트 수신 설정을 관리합니다. 창을 닫아도 연결은 유지됩니다.",
-            SettingsControls
-        )
-        {
-            Owner = this
-        };
-        settingsWindow.Closed += (_, _) => settingsWindow = null;
-        settingsWindow.Show();
-    }
-
-    private void ShowHistory(object sender, RoutedEventArgs e)
-    {
-        if (historyWindow is not null)
-        {
-            BringForward(historyWindow);
-            return;
-        }
-
-        historyWindow = new ServerToolWindow(
-            "출입 기록",
-            "DB 최근 500건 · 기록을 선택해 상세 정보 또는 해당 시각의 영상을 여세요.",
-            HistoryControls
-        )
-        {
-            Owner = this
-        };
-        historyWindow.Closed += (_, _) => historyWindow = null;
-        historyWindow.Show();
-    }
-
-    private async void PlaySelectedEvent(object sender, RoutedEventArgs e)
-    {
-        if (eventPlaybackBusy)
-            return;
-        if (Events.SelectedItem is not AccessEventRow row)
-        {
-            HistoryStatus.Text = "재생할 출입 기록을 선택해 주세요.";
-            return;
-        }
-
-        var db = Volatile.Read(ref faceDatabase);
-        if (db is null)
-        {
-            HistoryStatus.Text = "서버 DB 연결을 먼저 해 주세요.";
-            return;
-        }
-
-        eventPlaybackBusy = true;
-        EventPlaybackButton.IsEnabled = false;
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
-        timeout.CancelAfter(15000);
-        try
-        {
-            HistoryStatus.Text = "출입 시각 조회·녹화 열기 요청 중";
-            var request = await db.PlaybackEventAsync(row.이벤트ID, timeout.Token);
-            if (closing || !ReferenceEquals(db, Volatile.Read(ref faceDatabase)))
-                return;
-            var reply = await PlaybackWindow().OpenAsync(request, timeout.Token);
-            if (closing)
-                return;
-            HistoryStatus.Text =
-                reply.Success && reply.HasRecording ? "서버 녹화 재생 창 확인" : reply.Message;
-            if (!reply.HasRecording || !reply.Success)
-                MessageBox.Show(reply.Message, "출입 기록 영상");
-        }
-        catch (Exception)
-        {
-            if (!closing)
-            {
-                HistoryStatus.Text = "재생 연결 실패";
-                MessageBox.Show(
-                    "클라이언트 연결·서버 DB·15번 SQL 적용을 확인하세요.",
-                    "출입 기록 영상"
-                );
-            }
-        }
-        finally
-        {
-            eventPlaybackBusy = false;
-            if (!closing)
-                EventPlaybackButton.IsEnabled = true;
-        }
-    }
-
-    private void DoubleClickEvent(object sender, System.Windows.Input.MouseButtonEventArgs e)
-    {
-        if (
-            System.Windows.Controls.ItemsControl.ContainerFromElement(
-                Events,
-                e.OriginalSource as DependencyObject
-            ) is System.Windows.Controls.DataGridRow
-        )
-            PlaySelectedEvent(sender, e);
-    }
-
-    private ServerPlaybackWindow PlaybackWindow()
-    {
-        if (playbackWindow is null)
-        {
-            playbackWindow = new ServerPlaybackWindow(() => Volatile.Read(ref faceDatabase), media)
-            {
-                Owner = this
-            };
-            playbackWindow.Closed += (_, _) => playbackWindow = null;
-            playbackWindow.Show();
-        }
-
-        if (playbackWindow.WindowState == WindowState.Minimized)
-            playbackWindow.WindowState = WindowState.Normal;
-        playbackWindow.Activate();
-        return playbackWindow;
-    }
-
-    private void ShowTimeline(object sender, RoutedEventArgs e) => PlaybackWindow();
-
-    private void CopyPairing(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            if (serverLink is null || !int.TryParse(TcpPort.Text, out int port))
-                throw new InvalidOperationException();
-            Clipboard.SetText(PairingStore.Code(serverLink, ServerAddress.Text.Trim(), port));
-            TcpStatus.Text =
-                "연결 코드 복사 완료 · 클라이언트 설정에 붙여넣으세요. 코드는 비밀번호처럼 보관하세요.";
-        }
-        catch (Exception)
-        {
-            MessageBox.Show("클라이언트에서 접속 가능한 서버 IPv4 주소와 포트를 선택하세요.");
-        }
-    }
-
-    private void ShowEnrollment(object sender, RoutedEventArgs e)
-    {
-        if (enrollmentProcess is { HasExited: false })
-        {
-            MessageBox.Show("열린 얼굴 등록 창을 확인하세요.");
-            return;
-        }
-
-        var baseDir = AppContext.BaseDirectory;
-        var config = new DirectoryInfo(baseDir).Parent?.Name == "Release" ? "Release" : "Debug";
-        var paths = new[]
-        {
-            Path.GetFullPath(
-                Path.Combine(
-                    baseDir,
-                    $"../../../../FaceEnrollment/bin/{config}/net10.0-windows/FaceEnrollment.exe"
-                )
-            ),
-            Path.Combine(baseDir, "FaceEnrollment.exe")
-        };
-        var exe = paths.FirstOrDefault(File.Exists);
-        if (exe is null)
-        {
-            MessageBox.Show("Start_Server.cmd로 서버와 얼굴 등록 앱을 먼저 빌드하세요.");
-            return;
-        }
-
-        try
-        {
-            enrollmentProcess?.Dispose();
-            enrollmentProcess = Process.Start(new ProcessStartInfo(exe) { UseShellExecute = true });
-        }
-        catch (Exception)
-        {
-            MessageBox.Show("얼굴 등록 앱을 열 수 없습니다.");
-        }
-    }
 }

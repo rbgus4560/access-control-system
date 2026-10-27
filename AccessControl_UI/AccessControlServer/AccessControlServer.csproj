@@ -1,12 +1,15 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
+        <ApplicationIcon>Assets/camera.ico</ApplicationIcon>
         <TargetFramework>net10.0-windows</TargetFramework>
         <UseWPF>true</UseWPF>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
     <ItemGroup>
+        <Page Include="../Ui/StudioTheme.xaml" Link="Theme/StudioTheme.xaml"/>
+        <Resource Include="Assets/camera.ico"/>
         <Compile Include="../Ui/*.cs" Link="Ui/%(Filename)%(Extension)"/>
         <Compile Include="../Shared/PairingStore.cs" Link="Shared/PairingStore.cs"/>
         <Compile Include="../Shared/UiPreviewCapture.cs" Link="Shared/UiPreviewCapture.cs"/>

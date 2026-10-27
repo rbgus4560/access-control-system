@@ -1,4 +1,4 @@
-# 얼굴 인식 출입 통제 통합 프로젝트
+﻿# 얼굴 인식 출입 통제 통합 프로젝트
 
 .NET 10 WPF 관리 서버·얼굴 등록 앱·인증 클라이언트와 Python 얼굴 AI를 연결한다. 현재 기준은 12.4 연결·화면 개선과 12.3 전체 직원 자동 식별이다.
 
@@ -10,6 +10,11 @@
 - [최신 자동 식별 안내](docs/guides/AUTO_IDENTIFICATION_12_3_KO.md)를 우선 읽는다. 과거 1:1 직원 선택 절차와 구분한다.
 
 ## 문서
+
+- [핵심 기술 발표 원고와 문제 해결 설명](docs/portfolio/README.md)
+- [2026년 10월 27일 업로드 전 검증](docs/validation/VALIDATION_20261027_HANDOFF.md)
+
+- [최신 파일 구조와 리팩토링 검증](docs/refactor-20261027.md)
 
 - [실행·검사 스크립트 안내](docs/guides/COMMANDS.md)
 - [전체 문서 목차](docs/README.md)
@@ -28,3 +33,5 @@ DB 세션 재사용·선택형 암호화 자동 연결·TCP 자동 시작·저�
 [아래 방향 등록 정체 개선 및 재시험](docs/fixes/GUIDED_DOWN_20261022_KO.md): 앱 재시작 후 새 안내에 따라 실제 카메라 확인 필요.
 
 [등록 방향 안내 애니메이션](docs/guides/ENROLLMENT_ANIMATION_KO.md)은 시험 적용이다. 불편하면 등록 화면의 ‘움직이는 방향 안내’를 해제한다.
+
+[실시간 영상 30 FPS 목표 설정과 적용](docs/guides/LIVE_VIDEO_30FPS_KO.md). 앱 재시작 필요, 실제 카메라/네트워크 성능은 추가 확인.

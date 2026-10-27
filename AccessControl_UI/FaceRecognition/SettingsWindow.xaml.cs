@@ -7,9 +7,21 @@ namespace FaceRecognition;
 
 public partial class SettingsWindow : Window
 {
+    // 기어 메뉴에서 선택한 설정만 공개합니다. 탭으로 다른 설정을 노출하지 않습니다.
+    public void SelectSection(int index)
+    {
+        index = Math.Clamp(index, 0, 2);
+        Section0.Visibility = index == 0 ? Visibility.Visible : Visibility.Collapsed;
+        Section1.Visibility = index == 1 ? Visibility.Visible : Visibility.Collapsed;
+        Section2.Visibility = index == 2 ? Visibility.Visible : Visibility.Collapsed;
+        SectionTitle.Text = new[] { "서버 연결", "카메라·AI", "녹화·보관" }[index];
+        Title = "클라이언트 설정 · " + SectionTitle.Text;
+    }
+
     public SettingsWindow(UIElement connection, UIElement camera, UIElement recording)
     {
         InitializeComponent();
+        SelectSection(0);
         ConnectionHost.Content = connection;
         CameraHost.Content = camera;
         RecordingHost.Content = recording;

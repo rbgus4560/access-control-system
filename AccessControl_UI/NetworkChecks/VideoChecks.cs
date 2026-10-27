@@ -58,6 +58,7 @@ public static class VideoChecks
             Jpeg = jpeg,
             AgeMs = 10
         };
+        packet = packet with { CameraDisplayName = "CAM-01 · 정문" };
         using (var memory = new MemoryStream())
         {
             await VideoProtocol.WriteAsync(memory, packet, default);
@@ -67,7 +68,16 @@ public static class VideoChecks
                 decoded.Jpeg!.SequenceEqual(jpeg) && decoded.Session == packet.Session,
                 "Video roundtrip failed"
             );
+            Check(decoded.CameraDisplayName == "CAM-01 · 정문", "Camera display name lost in transport");
         }
+
+        var legacy = System.Text.Json.Nodes.JsonNode.Parse(System.Text.Json.JsonSerializer.Serialize(packet))!.AsObject();
+        legacy.Remove("CameraDisplayName");
+        var legacyPacket = System.Text.Json.JsonSerializer.Deserialize<VideoPacket>(legacy.ToJsonString())!;
+        VideoProtocol.Validate(legacyPacket);
+        Check(legacyPacket.CameraDisplayName == "", "Legacy packet must use an empty display name");
+        Reject(packet with { CameraDisplayName = new string('A', 61) });
+        Reject(packet with { CameraDisplayName = "invalid\nname" });
 
         Reject(packet with { Jpeg = new byte[VideoProtocol.MaxJpegBytes + 1] });
         Reject(packet with { Jpeg = new byte[] { 1, 2, 3, 4 } });
@@ -116,6 +126,11 @@ public static class VideoChecks
             Check(rejected, "Unbounded allocation accepted");
         }
 
+        if (Environment.GetCommandLineArgs().Contains("--video-metadata-only"))
+        {
+            Console.WriteLine("Camera name roundtrip / legacy packet / invalid name / bounded video metadata: PASS");
+            return;
+        }
         var source = new VideoSource();
         Guid session = Guid.NewGuid();
         source.Publish(Convert.ToBase64String(jpeg), Stopwatch.GetTimestamp());

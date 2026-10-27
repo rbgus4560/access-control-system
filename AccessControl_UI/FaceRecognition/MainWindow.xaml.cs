@@ -65,6 +65,7 @@ public partial class MainWindow : Window
         Activated += (_, _) => NavLive.IsChecked = true;
         AuxiliaryViews.Children.Clear();
         AiHost.Content = panel;
+        videoSource.DisplayName = () => panel.CameraDisplayName;
         RecentEvents.ItemsSource = recent;
         // The zone must never fall back to a same-PC database pipe.
         FaceApi.RemoteCaller = RemoteFaceClient.CallAsync;
@@ -261,14 +262,35 @@ public partial class MainWindow : Window
         };
         clock.Start();
         Clock.Text = DateTime.Now.ToString("yyyy.MM.dd  HH:mm:ss");
+        RefreshChrome();
         Loaded += async (_, _) =>
         {
             if (preview)
             {
                 Window target = this;
+                if (Environment.GetCommandLineArgs().Contains("--access-overlay-preview"))
+                    panel.PreviewVideoOverlay(!Environment.GetCommandLineArgs().Contains("--denied-preview"));
+                if (Environment.GetCommandLineArgs().Contains("--analysis-preview"))
+                {
+                    AnalysisButton.IsChecked = true;
+                    panel.SetAnalysisVisible(true);
+                }
+                if (Environment.GetCommandLineArgs().Contains("--menu-preview"))
+                    SettingsMenu.Visibility = Visibility.Visible;
+                if (Environment.GetCommandLineArgs().Contains("--hint-preview"))
+                {
+                    InlineHintText.Text = (string)CameraStatusIcon.ToolTip;
+                    InlineHint.Visibility = Visibility.Visible;
+                }
                 if (Environment.GetCommandLineArgs().Contains("--settings-preview"))
                 {
                     ShowSettings(this, new RoutedEventArgs());
+                    // 미리보기에서는 실제 장치 연결 없이 각 설정 탭의 축소 배치를 확인합니다.
+                    var arguments = Environment.GetCommandLineArgs();
+                    int sectionAt = Array.IndexOf(arguments, "--settings-section");
+                    if (sectionAt >= 0 && sectionAt + 1 < arguments.Length
+                        && int.TryParse(arguments[sectionAt + 1], out int section))
+                        settingsWindow!.SelectSection(section);
                     target = settingsWindow!;
                 }
                 AccessControl.Preview.UiPreviewCapture.Queue(target);
@@ -328,6 +350,12 @@ public partial class MainWindow : Window
             : monitor.Running ? "서버 · 연결 대기"
             : "서버 · 미연결";
         ServerConnection.Foreground = serverFresh ? Brushes.DarkGreen : Brushes.SlateGray;
+        CameraLight.Fill = cameraFresh ? Brushes.ForestGreen : Brushes.Firebrick;
+        ServerLight.Fill = serverFresh ? Brushes.ForestGreen : Brushes.Firebrick;
+        CameraStatusIcon.ToolTip = CameraConnection.Text;
+        ServerStatusIcon.ToolTip = $"{ServerConnection.Text} · {TcpHost.Text}:{TcpPort.Text}";
+        System.Windows.Automation.AutomationProperties.SetName(CameraStatusIcon, (string)CameraStatusIcon.ToolTip);
+        System.Windows.Automation.AutomationProperties.SetName(ServerStatusIcon, (string)ServerStatusIcon.ToolTip);
         double elapsed = Stopwatch.GetElapsedTime(fpsSince).TotalSeconds;
         LiveIndicator.Text = cameraFresh
             ? $"LIVE · 수신 {framesInPeriod / Math.Max(.001, elapsed):0.0} FPS"
@@ -341,6 +369,52 @@ public partial class MainWindow : Window
         if (window.WindowState == WindowState.Minimized)
             window.WindowState = WindowState.Normal;
         window.Activate();
+    }
+
+    private void OpenSettingsMenu(object sender, RoutedEventArgs e)
+    {
+        InlineHint.Visibility = Visibility.Collapsed;
+        SettingsMenu.Visibility = SettingsMenu.Visibility == Visibility.Visible
+            ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    private void ShowInlineHint(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        if (SettingsMenu.Visibility == Visibility.Visible) return;
+        if (sender is FrameworkElement element && element.ToolTip is string text)
+        {
+            InlineHintText.Text = text;
+            InlineHint.Visibility = Visibility.Visible;
+        }
+    }
+
+    private void HideInlineHint(object sender, System.Windows.Input.MouseEventArgs e) =>
+        InlineHint.Visibility = Visibility.Collapsed;
+
+    private void DismissSettingsMenu(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (!SettingsMenu.IsMouseOver && !SettingsButton.IsMouseOver)
+            SettingsMenu.Visibility = Visibility.Collapsed;
+    }
+
+    private void DismissSettingsOnEscape(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == System.Windows.Input.Key.Escape)
+        {
+            SettingsMenu.Visibility = Visibility.Collapsed;
+            InlineHint.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private void ToggleAnalysis(object sender, RoutedEventArgs e) =>
+        panel.SetAnalysisVisible(AnalysisButton.IsChecked == true);
+
+    private void OpenSettingsSection(object sender, RoutedEventArgs e)
+    {
+        SettingsMenu.Visibility = Visibility.Collapsed;
+        ShowSettings(sender, e);
+        if (sender is FrameworkElement { Tag: string section } && int.TryParse(section, out int index))
+            settingsWindow?.SelectSection(index);
     }
 
     private void ShowSettings(object sender, RoutedEventArgs e)
@@ -386,10 +460,12 @@ public partial class MainWindow : Window
     // 현재 관측의 인증 시도 ID와 서버 응답이 일치하고 응답이 최신일 때만 판정을 표시합니다.
     private void RefreshAccessDisplay()
     {
+        if (preview && Environment.GetCommandLineArgs().Contains("--access-overlay-preview")) return;
         var snapshot = observations.Get();
         var decision = lastDecision;
         if (snapshot.Reason == "AMBIGUOUS_MATCH" && snapshot.Fresh && galleryReady)
         {
+            panel.ClearAccessDecision();
             AccessStatus.Text =
                 "출입 판정 보류 · 두 직원의 얼굴 점수가 비슷합니다. 정면을 바라봐 주세요.";
             AccessStatus.Foreground = Brushes.DarkOrange;
@@ -407,11 +483,18 @@ public partial class MainWindow : Window
             || !galleryReady
         )
         {
+            panel.ClearAccessDecision();
             AccessStatus.Text =
                 "출입 판정 대기 · 등록 직원 자동 동기화·카메라·서버 연결을 확인하세요";
             AccessStatus.Foreground = Brushes.DimGray;
             return;
         }
+
+        if (decision.Recorded && decision.EventId is { } eventId
+            && decision.Result is "GRANTED" or "DENIED")
+            panel.ShowAccessDecision(eventId, decision.Result == "GRANTED",
+                string.IsNullOrWhiteSpace(decision.PersonName) ? "미등록/불일치" : decision.PersonName);
+        else panel.ClearAccessDecision();
 
         string result = decision.Result switch
         {

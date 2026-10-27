@@ -63,7 +63,9 @@ def annotate(frame, obs):
         left, top = np.maximum(xy.min(axis=0), 0).astype(int)
         right, bottom = np.minimum(xy.max(axis=0), [width - 1, height - 1]).astype(int)
         color = (0, 160, 255) if len(meshes) > 1 else (0, 190, 0)
-        cv2.rectangle(view, (left, top), (right, bottom), color, 2)
+        # 단일 얼굴은 dlib 사각형 하나만 표시합니다. 다중 얼굴은 각 영역을 따로 표시합니다.
+        if len(meshes) > 1:
+            cv2.rectangle(view, (left, top), (right, bottom), color, 2)
         if len(meshes) == 1:
             for x, y in xy.astype(int):
                 cv2.circle(view, (x, y), 1, color, -1)
